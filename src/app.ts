@@ -13,6 +13,7 @@ import { ApiError } from './middlewares/errors/ApiError';
 import { globalErrorHandler } from './middlewares/errors/globalError';
 import { initializePassport } from './middlewares/passport';
 import { rateLimiter } from './middlewares/rateLimiter';
+import authRouter from './routes/authRoute';
 import HttpStatusCode from './utils/httpStatusCode';
 
 const app = express();
@@ -89,7 +90,8 @@ app.get('/health', (req, res) => {
   res.send({ message: 'Ping' });
 });
 
-// Shop route
+// All route
+app.use('/api/v1/auth', authRouter);
 
 // Handle 404 errors
 app.all(/(.*)/, (req: Request, res: Response, next: NextFunction) => {
