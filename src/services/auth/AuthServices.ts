@@ -1,6 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { Model } from 'mongoose';
+import { Profile as DiscordProfile } from 'passport-discord';
+import { Profile as FacebookProfile } from 'passport-facebook';
+import { Profile as GoogleProfile } from 'passport-google-oauth20';
+import { Profile as TwitterProfile } from 'passport-twitter';
 import { config } from '../../configs/config';
 import { ApiError } from '../../middlewares/errors/ApiError';
 import { IUser, UserRole } from '../../models/userModel';
@@ -10,6 +14,7 @@ import {
   ISignupRequest,
   IVerifyEmailRequest,
 } from '../../types/authTypes';
+import { GitHubProfileJson } from '../../types/passport';
 import { catchAsync } from '../../utils/catchAsync';
 import HttpStatusCode from '../../utils/httpStatusCode';
 import { Status } from '../../utils/status';
@@ -21,6 +26,88 @@ export class AuthService extends AuthEngine {
   constructor(options: { model: Model<IUser>; role: UserRole }) {
     super(options);
   }
+
+  private oauth = async <T>(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+    provider: string,
+    options: {
+      profileExtractor: (profile: T) => {
+        email?: string;
+        verified?: boolean;
+        familyName?: string;
+        givenName?: string;
+        avatarUrl?: string;
+      };
+    }
+  ): Promise<void> => {
+    const profile = req.user as T;
+    const { email, verified, familyName, givenName, avatarUrl } =
+      options.profileExtractor(profile);
+
+    // Check if user exists in the database
+    const userExists = await this.model
+      .findOne({
+        $or: [{ email }, { normalizeMail: email }],
+      })
+      .select('auth twoFA')
+      .exec();
+
+    if (userExists) {
+      const providerExists = userExists.auth?.some(
+        (entry) => entry.provider === provider
+      );
+
+      if (!providerExists) {
+        await this.model.updateOne(
+          { _id: userExists._id },
+          {
+            $push: {
+              auth: {
+                provider,
+                _raw: req.user,
+              },
+            },
+          }
+        );
+      }
+
+      // Check if 2FA is enabled for this user
+      if (userExists?.twoFA?.enabled) {
+        await this.pending2FA(res, { id: userExists.id, remember: true });
+        return res.redirect('http://localhost:3001/sign-in/verify-2fa');
+      }
+
+      req.self = await this.model.findById(userExists._id);
+      req.remember = true;
+      req.redirect = true;
+      return next();
+    }
+
+    // Create new user from social profile
+    const newUser = await this.model.create({
+      familyName,
+      givenName,
+      email,
+      normalizeMail: email,
+      verified,
+      avatar: {
+        url: avatarUrl,
+      },
+      auth: [
+        {
+          provider,
+          _raw: req.user,
+        },
+      ],
+    });
+
+    req.self = newUser;
+    req.remember = true;
+    req.redirect = true;
+    next();
+  };
 
   public signup = catchAsync(
     async (
@@ -215,6 +302,76 @@ export class AuthService extends AuthEngine {
       req.self = user;
       req.remember = remember;
       next();
+    }
+  );
+
+  public googleAuth = catchAsync(
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      await this.oauth<GoogleProfile>(req, res, next, 'google', {
+        profileExtractor: (profile) => ({
+          email: profile._json?.email,
+          verified: profile._json?.email_verified,
+          familyName: profile._json?.given_name,
+          givenName: profile._json?.family_name,
+          avatarUrl: profile._json.picture,
+        }),
+      });
+    }
+  );
+
+  public githubAuth = catchAsync(
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      await this.oauth<{ _json: GitHubProfileJson }>(req, res, next, 'github', {
+        profileExtractor: (profile) => ({
+          email: profile._json?.email,
+          verified: true,
+          familyName: profile._json?.name?.split(' ')[0],
+          givenName: profile._json?.name?.split(' ')[1],
+          avatarUrl: profile._json.avatar_url,
+        }),
+      });
+    }
+  );
+
+  public twitterAuth = catchAsync(
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      await this.oauth<TwitterProfile>(req, res, next, 'twitter', {
+        profileExtractor: (profile) => ({
+          email: profile._json?.email,
+          verified: true,
+          familyName: profile._json?.name?.split(' ')[0],
+          givenName: profile._json?.name?.split(' ')[1],
+          avatarUrl: profile._json.profile_image_url,
+        }),
+      });
+    }
+  );
+
+  public facebookAuth = catchAsync(
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      await this.oauth<FacebookProfile>(req, res, next, 'facebook', {
+        profileExtractor: (profile) => ({
+          email: profile._json?.email || profile._json.id,
+          verified: true,
+          familyName: profile._json?.name?.split(' ')[0],
+          givenName: profile._json?.name?.split(' ')[1],
+          avatarUrl: profile._json.picture?.data?.url,
+        }),
+      });
+    }
+  );
+
+  public discordAuth = catchAsync(
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      await this.oauth<DiscordProfile>(req, res, next, 'discord', {
+        profileExtractor: (profile) => ({
+          email: profile.email,
+          verified: profile.verified,
+          familyName: profile.global_name?.split(' ')[0],
+          givenName: profile.global_name?.split(' ')[1],
+          avatarUrl: `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`,
+        }),
+      });
     }
   );
 
