@@ -1,0 +1,248 @@
+import dotenv from 'dotenv';
+import { ProcessEnv } from '../types/config';
+
+dotenv.config({ path: './.env', quiet: true });
+
+function validateEnvVariables(env: ProcessEnv): void {
+  const requiredVars: Array<keyof ProcessEnv> = [
+    'NODE_ENV',
+    'PORT',
+    'GATEWAY_PORT',
+    'AUTH_PORT',
+    'PRODUCT_PORT',
+
+    'DATABASE_ONLINE',
+    'DATABASE_PASSWORD_ONLINE',
+
+    'REDIS_URL',
+    'UPSTASH_REDIS_REST_URL',
+    'UPSTASH_REDIS_REST_TOKEN',
+    'NODE_REDIS_URL',
+    'NODE_REDIS_PORT',
+
+    'ACTIVATION_SECRET',
+    'CRYPTO_SECRET',
+    'HMAC_SECRET',
+    'EMAIL_CHANGE_SECRET',
+    'ALGORITHM',
+    'KEY_LENGTH',
+    'IV_LENGTH',
+
+    'ACCESS_TOKEN',
+    'REFRESH_TOKEN',
+    'PROTECT_TOKEN',
+    'ACCESS_TOKEN_EXPIRE',
+    'REFRESH_TOKEN_EXPIRE',
+    'PROTECT_TOKEN_EXPIRE',
+
+    'EMAIL_USERNAME',
+    'EMAIL_PASSWORD',
+    'EMAIL_HOST',
+    'EMAIL_PORT',
+    'EMAIL_FROM',
+
+    'GOOGLE_CLIENT_ID',
+    'GOOGLE_CLIENT_SECRET',
+
+    'GITHUB_CLIENT_ID',
+    'GITHUB_CLIENT_SECRET',
+
+    'FACEBOOK_CLIENT_ID',
+    'FACEBOOK_CLIENT_SECRET',
+
+    'CONSUMER_KEY',
+    'CONSUMER_SECRET',
+
+    'DISCORD_CLIENT_ID',
+    'DISCORD_CLIENT_SECRET',
+
+    'CLOUD_NAME',
+    'CLOUD_API_KEY',
+    'CLOUD_API_SECRET',
+    'CLOUDINARY_URL',
+
+    'IPINFO_KEY',
+
+    'CLIENT_ORIGIN',
+    'CLIENT_HUB_ORIGIN',
+    'SERVER_HUB_ORIGIN',
+    'SHOP_ORIGIN',
+
+    'COOKIE_SECRET',
+
+    'STRIPE_PUBLISHABLE_KEY',
+    'STRIPE_SECRET_KEY',
+
+    'KAFKA_BROKERS',
+    'KAFKA_USERNAME',
+    'KAFKA_PASSWORD',
+  ];
+
+  const missingVars = requiredVars.filter(
+    (key) => env[key] === undefined || env[key] === ''
+  );
+
+  if (missingVars.length > 0) {
+    console.error(`Missing environment variables: ${missingVars.join(', ')}`);
+    process.exit(1);
+  }
+}
+
+const env = process.env as unknown as ProcessEnv;
+validateEnvVariables(env);
+
+const {
+  NODE_ENV = 'development',
+  PORT = '8080',
+  GATEWAY_PORT = '8000',
+  AUTH_PORT = '8001',
+  PRODUCT_PORT = '8081',
+
+  DATABASE_ONLINE = '',
+  DATABASE_PASSWORD_ONLINE = '',
+
+  REDIS_URL = '',
+  UPSTASH_REDIS_REST_URL = '',
+  UPSTASH_REDIS_REST_TOKEN = '',
+  NODE_REDIS_URL = '',
+  NODE_REDIS_PORT = '',
+
+  ACTIVATION_SECRET = '',
+  CRYPTO_SECRET = '',
+  HMAC_SECRET = '',
+  EMAIL_CHANGE_SECRET = '',
+  ALGORITHM = '',
+  KEY_LENGTH = '',
+  IV_LENGTH = '',
+
+  ACCESS_TOKEN = '',
+  REFRESH_TOKEN = '',
+  PROTECT_TOKEN = '',
+  ACCESS_TOKEN_EXPIRE = '',
+  REFRESH_TOKEN_EXPIRE = '',
+  PROTECT_TOKEN_EXPIRE = '',
+
+  EMAIL_USERNAME = '',
+  EMAIL_PASSWORD = '',
+  EMAIL_HOST = '',
+  EMAIL_PORT = '',
+  EMAIL_FROM = '',
+
+  GOOGLE_CLIENT_ID = '',
+  GOOGLE_CLIENT_SECRET = '',
+
+  GITHUB_CLIENT_ID = '',
+  GITHUB_CLIENT_SECRET = '',
+
+  FACEBOOK_CLIENT_ID = '',
+  FACEBOOK_CLIENT_SECRET = '',
+
+  CONSUMER_KEY = '',
+  CONSUMER_SECRET = '',
+
+  DISCORD_CLIENT_ID = '',
+  DISCORD_CLIENT_SECRET = '',
+
+  CLOUD_NAME = '',
+  CLOUD_API_KEY = '',
+  CLOUD_API_SECRET = '',
+  CLOUDINARY_URL = '',
+
+  IPINFO_KEY = '',
+
+  CLIENT_ORIGIN = '',
+  CLIENT_HUB_ORIGIN = '',
+  SERVER_HUB_ORIGIN = '',
+  SHOP_ORIGIN = '',
+
+  COOKIE_SECRET = '',
+
+  STRIPE_PUBLISHABLE_KEY = '',
+  STRIPE_SECRET_KEY = '',
+
+  KAFKA_BROKERS = '',
+  KAFKA_USERNAME = '',
+  KAFKA_PASSWORD = '',
+} = env;
+
+const ISPRODUCTION = NODE_ENV === 'production';
+const DB = ISPRODUCTION
+  ? DATABASE_ONLINE.replace('<db_password>', DATABASE_PASSWORD_ONLINE)
+  : 'mongodb://127.0.0.1/devmun';
+
+export const config = {
+  NODE_ENV,
+  PORT,
+  GATEWAY_PORT,
+  AUTH_PORT,
+  PRODUCT_PORT,
+
+  DATABASE_ONLINE,
+  DATABASE_PASSWORD_ONLINE,
+
+  REDIS_URL,
+  UPSTASH_REDIS_REST_URL,
+  UPSTASH_REDIS_REST_TOKEN,
+  NODE_REDIS_URL,
+  NODE_REDIS_PORT,
+
+  ACTIVATION_SECRET,
+  CRYPTO_SECRET,
+  HMAC_SECRET,
+  EMAIL_CHANGE_SECRET,
+  ALGORITHM,
+  KEY_LENGTH,
+  IV_LENGTH,
+
+  ACCESS_TOKEN,
+  REFRESH_TOKEN,
+  PROTECT_TOKEN,
+  ACCESS_TOKEN_EXPIRE,
+  REFRESH_TOKEN_EXPIRE,
+  PROTECT_TOKEN_EXPIRE,
+
+  EMAIL_USERNAME,
+  EMAIL_PASSWORD,
+  EMAIL_HOST,
+  EMAIL_PORT,
+  EMAIL_FROM,
+
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+
+  GITHUB_CLIENT_ID,
+  GITHUB_CLIENT_SECRET,
+
+  FACEBOOK_CLIENT_ID,
+  FACEBOOK_CLIENT_SECRET,
+
+  CONSUMER_KEY,
+  CONSUMER_SECRET,
+
+  DISCORD_CLIENT_ID,
+  DISCORD_CLIENT_SECRET,
+
+  CLOUD_NAME,
+  CLOUD_API_KEY,
+  CLOUD_API_SECRET,
+  CLOUDINARY_URL,
+
+  IPINFO_KEY,
+
+  CLIENT_ORIGIN,
+  CLIENT_HUB_ORIGIN,
+  SERVER_HUB_ORIGIN,
+  SHOP_ORIGIN,
+
+  COOKIE_SECRET,
+
+  STRIPE_PUBLISHABLE_KEY,
+  STRIPE_SECRET_KEY,
+
+  KAFKA_BROKERS,
+  KAFKA_USERNAME,
+  KAFKA_PASSWORD,
+
+  ISPRODUCTION,
+  DB,
+};
