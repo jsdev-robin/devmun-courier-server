@@ -438,6 +438,90 @@ export class AuthService extends AuthEngine {
       }
     );
 
+  public validateToken = catchAsync(
+    async (
+      req: Request<Record<string, string>, unknown> & {
+        userId?: string | undefined;
+        accessToken?: string | undefined;
+      },
+      res: Response,
+      next: NextFunction
+    ): Promise<void> => {
+      const accessCookie = req.signedCookies[this.getCookieNames().access];
+
+      // If the access token is missing, throw an unauthorized error
+      if (accessCookie === false) {
+        return next(
+          new ApiError(
+            'Your session has expired or is no longer available. Please log in again to continue.',
+            HttpStatusCode.UNAUTHORIZED
+          )
+        );
+      }
+
+      // Verify the access token and decode the payload
+      const decoded = jwt.verify(accessCookie, config.ACCESS_TOKEN) as {
+        id: string;
+      } & TokenSignature;
+
+      // Attach user ID and access token to the request object
+      req.userId = decoded?.id;
+      req.accessToken = accessCookie;
+
+      // // Validate the decrypted IP against the request IP
+      // if (this.checkTokenSignature(decoded, req)) {
+      //   return this.sessionUnauthorized(res, next);
+      // }
+
+      next();
+    }
+  );
+
+  public requireAuth = catchAsync(
+    async (
+      req: Request<unknown, unknown, unknown> & {
+        userId?: string | undefined;
+        accessToken?: string | undefined;
+      },
+      res: Response,
+      next: NextFunction
+    ): Promise<void> => {
+      // Get credentials from request
+      const { userId, accessToken } = req;
+
+      // Query session and user data from Redis
+      const p = nodeClient.multi();
+      p.SISMEMBER(`${userId}:session`, Crypto.hmac(String(accessToken)));
+      p.json.GET(`${userId}`);
+
+      const [sessionToken, user] = await p.exec();
+
+      // Invalidate if session/user not found
+      if (!sessionToken || !user) {
+        return this.sessionUnauthorized(res, next);
+      }
+
+      req.self = user;
+      next();
+    }
+  );
+
+  public restrictTo = (...roles: UserRole[]) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+      const user = req.self;
+      if (!user?.role || !roles.includes(user.role)) {
+        return next(
+          new ApiError(
+            'You do not have permission to perform this action',
+            HttpStatusCode.FORBIDDEN
+          )
+        );
+      }
+
+      next();
+    };
+  };
+
   public refreshToken = catchAsync(
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       // Get refresh token from cookies
