@@ -153,7 +153,7 @@ const UserSchema: Schema = new Schema(
     role: {
       type: String,
       enum: ['admin', 'agent', 'customer'],
-      required: true,
+      default: 'customer',
     },
     address: { type: String },
     sessions: {

@@ -168,7 +168,7 @@ const {
 const ISPRODUCTION = NODE_ENV === 'production';
 const DB = ISPRODUCTION
   ? DATABASE_ONLINE.replace('<db_password>', DATABASE_PASSWORD_ONLINE)
-  : 'mongodb://127.0.0.1/devmun';
+  : 'mongodb://127.0.0.1/courier';
 
 export const config = {
   NODE_ENV,

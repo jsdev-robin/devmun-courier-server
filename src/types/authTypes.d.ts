@@ -5,6 +5,7 @@ export interface ISignupRequest extends Request {
     familyName: string;
     givenName: string;
     email: string;
+    phone: string;
     password: string;
   };
 }

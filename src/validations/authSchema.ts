@@ -34,6 +34,8 @@ export const authSchema = {
       .isEmail()
       .withMessage('Please enter a valid email'),
 
+    check('phone').trim().notEmpty().withMessage('Phone is required'),
+
     check('password')
       .notEmpty()
       .withMessage('Password is required')
