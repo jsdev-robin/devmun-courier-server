@@ -5,11 +5,15 @@ import { Profile as DiscordProfile } from 'passport-discord';
 import { Profile as FacebookProfile } from 'passport-facebook';
 import { Profile as GoogleProfile } from 'passport-google-oauth20';
 import { Profile as TwitterProfile } from 'passport-twitter';
+import QRCode from 'qrcode';
+import speakeasy from 'speakeasy';
 import { config } from '../../configs/config';
+import { nodeClient } from '../../configs/redis';
 import { ApiError } from '../../middlewares/errors/ApiError';
 import { IUser, UserRole } from '../../models/userModel';
 import { Crypto, Decipheriv } from '../../security/Crypto';
 import {
+  IConfirm2FARequest,
   ISigninRequest,
   ISignupRequest,
   IVerifyEmailRequest,
@@ -20,6 +24,7 @@ import HttpStatusCode from '../../utils/httpStatusCode';
 import { Status } from '../../utils/status';
 import { SendMail } from '../email/SendMail';
 import { AuthEngine } from './engine/AuthEngine';
+import { REFRESH_TTL } from './engine/CookieService';
 import { TokenSignature } from './engine/TokenService';
 
 export class AuthService extends AuthEngine {
@@ -547,6 +552,141 @@ export class AuthService extends AuthEngine {
         status: Status.SUCCESS,
         message: 'You have been successfully logged out.',
       });
+    }
+  );
+
+  public generate2FASetup = catchAsync(
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      const user = req.self;
+
+      const secret = speakeasy.generateSecret({
+        name: `Devmun:${Crypto.hash(user?.email)}`,
+      });
+
+      if (!secret.otpauth_url) {
+        return next(
+          new ApiError(
+            'Failed to generate otpauth_url',
+            HttpStatusCode.INTERNAL_SERVER_ERROR
+          )
+        );
+      }
+
+      const qrCodeDataUrl = await QRCode.toDataURL(secret.otpauth_url);
+
+      res.status(HttpStatusCode.OK).json({
+        status: 'success',
+        message: '2FA setup generated successfully.',
+        data: {
+          secret: secret.base32,
+          otpauth_url: secret.otpauth_url,
+          qrCodeDataUrl,
+        },
+      });
+    }
+  );
+
+  public confirm2FASetup = catchAsync(
+    async (
+      req: IConfirm2FARequest,
+      res: Response,
+      next: NextFunction
+    ): Promise<void> => {
+      const { token, secret } = req.body;
+
+      const isVerified = speakeasy.totp.verify({
+        secret,
+        encoding: 'base32',
+        token,
+        window: 1,
+      });
+
+      if (!isVerified) {
+        return next(
+          new ApiError(
+            'Invalid or expired 2FA token.',
+            HttpStatusCode.UNAUTHORIZED
+          )
+        );
+      }
+
+      const encryptedKey = await Crypto.cipheriv(secret, config.CRYPTO_SECRET);
+
+      const user = await this.model.findByIdAndUpdate(
+        req.self._id,
+        {
+          $set: {
+            'twoFA.enabled': true,
+            'twoFA.secret': encryptedKey,
+          },
+        },
+        { new: true }
+      );
+
+      const p = nodeClient.multi();
+      p.json.SET(
+        `${user?._id}`,
+        '$',
+        JSON.parse(JSON.stringify(user?.toObject()))
+      );
+      p.EXPIRE(`${user?._id}`, REFRESH_TTL * 24 * 60 * 60);
+      await p.exec();
+
+      res.status(HttpStatusCode.OK).json({
+        status: 'success',
+        message: '2FA has been confirmed and enabled.',
+      });
+    }
+  );
+
+  public verify2FAOnSign = catchAsync(
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      const pending2FACookie = req.cookies[this.getCookieNames().pending2FA];
+      const { token } = req.params;
+
+      const { encrypted } = jwt.verify(
+        pending2FACookie,
+        config.ACTIVATION_SECRET
+      ) as {
+        encrypted: Decipheriv;
+      };
+
+      const { id, remember } = await Crypto.decipheriv<{
+        id: string;
+        remember: boolean;
+      }>(encrypted, config.CRYPTO_SECRET);
+
+      const [secureUser, basicUser] = await Promise.all([
+        this.model.findById({ _id: id }).select('twoFA'),
+        this.model.findById({ _id: id }),
+      ]);
+
+      const secretKey = secureUser?.twoFA.secret as Decipheriv;
+
+      const base32Secret = await Crypto.decipheriv<string>(
+        secretKey,
+        config.CRYPTO_SECRET
+      );
+
+      const isVerified = speakeasy.totp.verify({
+        secret: base32Secret ?? '',
+        encoding: 'base32',
+        token,
+        window: 1,
+      });
+
+      if (!isVerified) {
+        return next(
+          new ApiError(
+            'Invalid or expired 2FA token. Check your Google Authenticator app and try again.',
+            HttpStatusCode.UNAUTHORIZED
+          )
+        );
+      }
+
+      req.self = basicUser;
+      req.remember = remember;
+      next();
     }
   );
 }
