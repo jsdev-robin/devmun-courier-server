@@ -80,13 +80,13 @@ app.use(
 app.use(
   cors({
     origin: ['http://localhost:3000'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Auth'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
     optionsSuccessStatus: 200,
   })
 );
 
-app.get('/health', (req, res) => {
+app.get('/', (req, res) => {
   res.send({ message: 'Ping' });
 });
 
