@@ -689,4 +689,55 @@ export class AuthService extends AuthEngine {
       next();
     }
   );
+
+  public getSessions = catchAsync(
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      // Get authenticated user from request
+      const user = req.self;
+
+      // Return error if no user found
+      if (!user) {
+        return next(
+          new ApiError(
+            'No user found. Please log in again to access your account.',
+            HttpStatusCode.BAD_REQUEST
+          )
+        );
+      }
+
+      // Query user's session tokens with:
+      const data = await this.model
+        .findById(user._id)
+        .select({
+          sessions: {
+            $map: {
+              input: {
+                $sortArray: {
+                  input: '$sessions',
+                  sortBy: { loggedInAt: -1 },
+                },
+              },
+              as: 'token',
+              in: {
+                token: '$$token.token',
+                deviceInfo: '$$token.deviceInfo',
+                location: '$$token.location',
+                ip: '$$token.ip',
+                loggedInAt: '$$token.loggedInAt',
+                status: '$$token.status',
+              },
+            },
+          },
+          _id: 0,
+        })
+        .lean()
+        .exec();
+      // Return sorted session history
+      res.status(HttpStatusCode.OK).json({
+        status: Status.SUCCESS,
+        message: 'Sign-in history fetched successfully.',
+        data,
+      });
+    }
+  );
 }
