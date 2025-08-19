@@ -1,0 +1,107 @@
+import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import express, { NextFunction, Request, Response } from 'express';
+import session from 'express-session';
+import useragent from 'express-useragent';
+import helmet from 'helmet';
+import ipinfo, { defaultIPSelector } from 'ipinfo-express';
+import morgan from 'morgan';
+import passport from 'passport';
+import { config } from './configs/config';
+import { ApiError } from './middlewares/errors/ApiError';
+import { globalErrorHandler } from './middlewares/errors/globalError';
+import { initializePassport } from './middlewares/passport';
+import { rateLimiter } from './middlewares/rateLimiter';
+import HttpStatusCode from './utils/httpStatusCode';
+
+const app = express();
+
+// Development logging
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
+
+// Proxy middleware
+app.set('trust proxy', 1);
+
+// Configure sessions for OAuth 2.0
+app.use(
+  session({
+    secret: 'your-secret',
+    resave: false,
+    saveUninitialized: true,
+  })
+);
+
+// Initialize Passport
+initializePassport();
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Serialize user for session
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+
+// Deserialize user from session
+passport.deserializeUser((user: Express.User, done) => {
+  done(null, user);
+});
+
+// Set security-related HTTP headers
+app.use(helmet());
+
+// Apply the rate limiting middleware to all requests.
+app.use(rateLimiter());
+
+// Parse request bodies
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+
+// Get user device info
+app.use(useragent.express());
+
+// Parse cookies
+app.use(cookieParser(config.COOKIE_SECRET));
+
+// Get req  location
+app.use(
+  ipinfo({
+    token: config.IPINFO_KEY,
+    cache: null,
+    timeout: 5000,
+    ipSelector: defaultIPSelector,
+  })
+);
+
+// Configure Cross-Origin Resource Sharing (CORS)
+app.use(
+  cors({
+    origin: ['http://localhost:3000'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Auth'],
+    credentials: true,
+    optionsSuccessStatus: 200,
+  })
+);
+
+app.get('/health', (req, res) => {
+  res.send({ message: 'Ping' });
+});
+
+// Shop route
+
+// Handle 404 errors
+app.all(/(.*)/, (req: Request, res: Response, next: NextFunction) => {
+  return next(
+    new ApiError(
+      `Can't find ${req.originalUrl} on this server!`,
+      HttpStatusCode.NOT_FOUND
+    )
+  );
+});
+
+// Global error handling middleware
+app.use(globalErrorHandler);
+
+export default app;

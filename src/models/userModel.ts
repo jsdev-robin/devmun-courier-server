@@ -1,21 +1,154 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import { hash } from 'bcryptjs';
+import mongoose, {
+  CallbackWithoutResultAndOptionalError,
+  Document,
+  ObjectId,
+  Schema,
+} from 'mongoose';
+
+export type UserRole = 'admin' | 'agent' | 'customer';
+
+export interface ISession {
+  token?: string;
+  deviceInfo?: {
+    deviceType?: string;
+    os?: string;
+    browser?: string;
+    userAgent?: string;
+  };
+  ip?: string;
+  location?: {
+    city?: string;
+    country?: string;
+    lat?: number;
+    lng?: number;
+  };
+  loggedInAt?: Date;
+  expiresAt?: Date;
+  revoked?: boolean;
+  revokedAt?: Date;
+  lastActivityAt?: Date;
+  riskScore?: number;
+  trustedDevice?: boolean;
+  status?: boolean;
+}
+
+export interface IProvider {
+  provider:
+    | 'jwt'
+    | 'google'
+    | 'github'
+    | 'twitter'
+    | 'facebook'
+    | 'discord'
+    | 'linkedin';
+  _raw: Record<string, unknown>;
+}
 
 export interface IUser extends Document {
-  name: string;
+  _id: ObjectId;
+  id: string;
+  familyName: string;
+  givenName: string;
+  avatar?: {
+    public_id: string;
+    url: string;
+  };
   email: string;
-  password: string;
+  password?: string;
   phone: string;
-  role: 'admin' | 'agent' | 'customer';
+  role: UserRole;
   address?: string;
+  sessions?: ISession[];
+  twoFA: {
+    enabled: boolean;
+    secret: {
+      salt: string;
+      iv: string;
+      data: string;
+    };
+  };
+  auth: IProvider[];
+
   createdAt: Date;
   updatedAt: Date;
+
+  isPasswordValid: (candidatePassword: string) => Promise<boolean>;
+  createPasswordResetToken: () => string;
 }
+
+const providerSchema = new Schema<IProvider>(
+  {
+    provider: {
+      type: String,
+      enum: [
+        'jwt',
+        'google',
+        'github',
+        'twitter',
+        'facebook',
+        'discord',
+        'linkedin',
+      ],
+      default: 'jwt',
+    },
+    _raw: {
+      type: Schema.Types.Mixed,
+    },
+  },
+  { _id: false }
+);
+
+const secret2FaSchema = new Schema(
+  {
+    salt: String,
+    iv: String,
+    data: String,
+  },
+  { _id: false }
+);
+
+const SessionSchema = new Schema<ISession>(
+  {
+    token: String,
+    deviceInfo: {
+      deviceType: String,
+      os: String,
+      browser: String,
+      userAgent: String,
+    },
+    location: {
+      city: String,
+      country: String,
+      lat: Number,
+      lng: Number,
+    },
+    ip: String,
+    loggedInAt: { type: Date, default: Date.now },
+    expiresAt: {
+      type: Date,
+      default: () => new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+    },
+    revoked: { type: Boolean, default: false },
+    revokedAt: Date,
+    lastActivityAt: { type: Date, default: Date.now },
+    riskScore: { type: Number, default: 0 },
+    trustedDevice: { type: Boolean, default: false },
+    status: { type: Boolean, default: true },
+  },
+  { _id: false }
+);
 
 const UserSchema: Schema = new Schema(
   {
-    name: { type: String, required: true },
+    familyName: { type: String, trim: true },
+    givenName: { type: String, trim: true },
+    avatar: {
+      public_id: { type: String },
+      url: { type: String },
+    },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    password: { type: String },
     phone: { type: String, required: true },
     role: {
       type: String,
@@ -23,8 +156,69 @@ const UserSchema: Schema = new Schema(
       required: true,
     },
     address: { type: String },
+    sessions: {
+      type: [SessionSchema],
+      select: false,
+    },
+    twoFA: {
+      enabled: {
+        type: Boolean,
+        default: false,
+      },
+      secret: {
+        type: secret2FaSchema,
+        select: false,
+      },
+    },
+    auth: {
+      type: [providerSchema],
+      default: [],
+      select: false,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      versionKey: false,
+      transform(_, ret: Partial<Record<string, unknown>>) {
+        delete ret.password;
+        delete ret.auth;
+        delete ret.sessions;
+
+        return ret;
+      },
+    },
+    toObject: {
+      virtuals: true,
+      versionKey: false,
+      transform(_, ret: Partial<Record<string, unknown>>) {
+        delete ret.password;
+        delete ret.auth;
+        delete ret.sessions;
+
+        return ret;
+      },
+    },
+  }
+);
+
+UserSchema.virtual('displayName').get(function (this: IUser) {
+  return `${this.familyName} ${this.givenName}`.trim();
+});
+
+UserSchema.pre(
+  'save',
+  async function (next: CallbackWithoutResultAndOptionalError) {
+    try {
+      if (!this.isModified('password')) return next();
+      this.password = await hash(String(this.password), 12);
+
+      next();
+    } catch (error: unknown) {
+      next(error as Error);
+    }
+  }
 );
 
 export default mongoose.model<IUser>('User', UserSchema);
