@@ -15,6 +15,7 @@ import HttpStatusCode from '../../utils/httpStatusCode';
 import { Status } from '../../utils/status';
 import { SendMail } from '../email/SendMail';
 import { AuthEngine } from './engine/AuthEngine';
+import { TokenSignature } from './engine/TokenService';
 
 export class AuthService extends AuthEngine {
   constructor(options: { model: Model<IUser>; role: UserRole }) {
@@ -274,4 +275,121 @@ export class AuthService extends AuthEngine {
         }
       }
     );
+
+  public refreshToken = catchAsync(
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      // Get refresh token from cookies
+      const refreshCookie = req.cookies[this.getCookieNames().refresh];
+
+      // Exit early if no refresh token is found
+      if (!refreshCookie) {
+        return this.sessionUnauthorized(res, next);
+      }
+
+      try {
+        // Verify and decode the refresh token payload
+        const decode = jwt.verify(
+          refreshCookie,
+          config.REFRESH_TOKEN
+        ) as TokenSignature;
+
+        if (this.checkTokenSignature(decode, req)) {
+          return this.sessionUnauthorized(res, next);
+        }
+
+        const { remember, id, role, token } = decode;
+
+        // Rotate access and refresh tokens
+        const [accessToken, refreshToken, protectToken] = this.rotateToken(
+          req,
+          {
+            id: id,
+            role: role,
+            remember: remember,
+          }
+        );
+
+        // Sets access token as a cookie
+        res.cookie(...this.createCookie('access', accessToken, remember));
+        // Sets refresh token as a cookie
+        res.cookie(...this.createCookie('refresh', refreshToken, remember));
+        // Sets protect token as a cookie
+        res.cookie(...this.createCookie('protect', protectToken, remember));
+
+        // Hash new access token for Redis and DB session comparison
+        const oldToken = token;
+        const newToken = accessToken;
+
+        await this.rotateSession({
+          id: id,
+          oldToken,
+          newToken,
+        });
+
+        // Respond with success message
+        res.status(200).json({
+          status: Status.SUCCESS,
+          message: 'Token refreshed successfully.',
+        });
+      } catch (error) {
+        // If headers haven't been sent yet, clear cookies and pass error to next handler
+        if (!res.headersSent) {
+          this.clearAllCookies(res);
+        }
+        next(error);
+      }
+    }
+  );
+
+  public signout = catchAsync(
+    async (req: Request, res: Response): Promise<void> => {
+      const accessToken = req.signedCookies[this.getCookieNames().access];
+      const user = req.self;
+      await this.removeASession(res, {
+        id: user._id,
+        token: Crypto.hmac(accessToken),
+      });
+
+      this.clearAllCookies(res);
+
+      res.status(HttpStatusCode.OK).json({
+        status: Status.SUCCESS,
+        message: 'You have been successfully signed out.',
+      });
+    }
+  );
+
+  public signoutSession = catchAsync(
+    async (req: Request, res: Response): Promise<void> => {
+      // Extract the session token from request parameters
+      const { token } = req.params;
+      const user = req.self;
+
+      await this.removeASession(res, {
+        id: user._id,
+        token: token,
+      });
+
+      // Send a success response indicating logout completion
+      res.status(HttpStatusCode.OK).json({
+        status: Status.SUCCESS,
+        message: 'You have been successfully logged out.',
+      });
+    }
+  );
+
+  public signoutAllSession = catchAsync(
+    async (req: Request, res: Response): Promise<void> => {
+      const user = req.self;
+
+      await this.removeOtherSessions(req, {
+        id: user.id,
+      });
+
+      res.status(HttpStatusCode.OK).json({
+        status: Status.SUCCESS,
+        message: 'You have been successfully logged out.',
+      });
+    }
+  );
 }
