@@ -60,10 +60,11 @@ export const COOKIE_OPTIONS_HTTP: CookieOptions = {
 };
 
 export const COOKIE_OPTIONS_NOT_HTTP: CookieOptions = {
-  httpOnly: false,
+  httpOnly: true,
   sameSite: 'none',
   secure: true,
   path: '/',
+  domain: config.ISPRODUCTION ? '.devmun.xyz' : 'localhost',
 };
 
 // Admin
