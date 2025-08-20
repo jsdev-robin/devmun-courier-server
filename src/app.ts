@@ -35,9 +35,15 @@ app.set('trust proxy', 1);
 // Configure sessions for OAuth 2.0
 app.use(
   session({
-    secret: 'your-secret',
+    secret: 'dddd',
     resave: false,
     saveUninitialized: true,
+    cookie: {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 24 * 24 * 60 * 1000,
+    },
   })
 );
 
