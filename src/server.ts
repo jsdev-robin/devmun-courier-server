@@ -14,6 +14,7 @@ const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: 'https://www.devmun.xyz',
+    // origin: 'http://localhost:3000',
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -33,7 +34,7 @@ io.on('connection', (socket) => {
   socket.on('agentLocation', ({ customerId, lat, lng }) => {
     io.to(customerId).emit('locationUpdate', { lat, lng });
 
-    // console.log(lat, lng);
+    console.log(lat);
   });
 });
 

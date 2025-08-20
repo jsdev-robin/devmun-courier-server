@@ -91,7 +91,11 @@ app.use(
 // Configure Cross-Origin Resource Sharing (CORS)
 app.use(
   cors({
-    origin: ['https://devmun.xyz', 'https://www.devmun.xyz'],
+    origin: [
+      'https://devmun.xyz',
+      'https://www.devmun.xyz',
+      'http://localhost:3000',
+    ],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
     optionsSuccessStatus: 200,
