@@ -85,10 +85,7 @@ app.use(
 // Configure Cross-Origin Resource Sharing (CORS)
 app.use(
   cors({
-    origin: [
-      'http://localhost:3000',
-      'https://devmun-courier-client.vercel.app',
-    ],
+    origin: ['http://localhost:3000', 'https://courier.devmun.xyz'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
     optionsSuccessStatus: 200,
