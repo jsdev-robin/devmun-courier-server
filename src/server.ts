@@ -44,6 +44,8 @@ io.on('connection', (socket) => {
       JSON.stringify({ lat, lng })
     );
     io.to(customerId).emit('locationUpdate', { lat, lng });
+
+    console.log(lat);
   });
 
   socket.on('agentDisconnect', async (customerId) => {
