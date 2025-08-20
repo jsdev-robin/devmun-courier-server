@@ -13,31 +13,27 @@ const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: 'http://shop-hub.devmun.xyz',
+    origin: 'https://devmun-courier-client.vercel.app',
     methods: ['GET', 'POST'],
     credentials: true,
   },
 });
 
+// io.use((socket, next) => {
+//   const cookieHeader = socket.handshake.headers.cookie;
+//   if (!cookieHeader) return next(new Error('Unauthorized'));
+//   next();
+// });
+
 io.on('connection', (socket) => {
-  console.log('A user connected:', socket.id);
-
-  socket.on('message', (msg) => {
-    console.log('Message received:', msg);
-    socket.broadcast.emit('message', msg);
+  socket.on('joinCustomerRoom', (customerId) => {
+    socket.join(customerId);
   });
 
-  socket.on('join', (roomId) => {
-    socket.join(roomId);
-    socket.to(roomId).emit('user-joined', socket.id);
-  });
+  socket.on('agentLocation', ({ customerId, lat, lng }) => {
+    io.to(customerId).emit('locationUpdate', { lat, lng });
 
-  socket.on('signal', ({ roomId, data }) => {
-    socket.to(roomId).emit('signal', { from: socket.id, data });
-  });
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+    // console.log(lat, lng);
   });
 });
 

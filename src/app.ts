@@ -8,12 +8,14 @@ import helmet from 'helmet';
 import ipinfo, { defaultIPSelector } from 'ipinfo-express';
 import morgan from 'morgan';
 import passport from 'passport';
+import qs from 'qs';
 import { config } from './configs/config';
 import { ApiError } from './middlewares/errors/ApiError';
 import { globalErrorHandler } from './middlewares/errors/globalError';
 import { initializePassport } from './middlewares/passport';
 import { rateLimiter } from './middlewares/rateLimiter';
 import authRouter from './routes/authRoute';
+import parcelRouter from './routes/parcelRoute';
 import HttpStatusCode from './utils/httpStatusCode';
 
 const app = express();
@@ -22,6 +24,10 @@ const app = express();
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+// Enable nested query parsing
+app.set('query parser', (str: string) => qs.parse(str));
+// app.set('query parser', 'extended');
 
 // Proxy middleware
 app.set('trust proxy', 1);
@@ -79,7 +85,10 @@ app.use(
 // Configure Cross-Origin Resource Sharing (CORS)
 app.use(
   cors({
-    origin: ['http://localhost:3000'],
+    origin: [
+      'http://localhost:3000',
+      'https://devmun-courier-client.vercel.app',
+    ],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
     optionsSuccessStatus: 200,
@@ -92,6 +101,7 @@ app.get('/', (req, res) => {
 
 // All route
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/customer', parcelRouter);
 
 // Handle 404 errors
 app.all(/(.*)/, (req: Request, res: Response, next: NextFunction) => {

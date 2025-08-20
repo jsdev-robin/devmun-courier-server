@@ -1,4 +1,4 @@
-import { hash } from 'bcryptjs';
+import { compare, hash } from 'bcryptjs';
 import mongoose, {
   CallbackWithoutResultAndOptionalError,
   Document,
@@ -220,5 +220,12 @@ UserSchema.pre(
     }
   }
 );
+
+UserSchema.methods.isPasswordValid = async function (
+  this: IUser,
+  candidatePassword: string
+): Promise<boolean> {
+  return await compare(candidatePassword, this.password ?? '');
+};
 
 export default mongoose.model<IUser>('User', UserSchema);

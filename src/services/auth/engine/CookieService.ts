@@ -66,17 +66,23 @@ export const COOKIE_OPTIONS_NOT_HTTP: CookieOptions = {
   path: '/',
 };
 
-// Seller
-export const COOKIE_A1 = '__xa91fe7';
-export const COOKIE_A2 = '__xa92be3';
-export const COOKIE_A3 = '__xa93cd4';
-export const COOKIE_A4 = '__xa93cd5';
+// Admin
+export const COOKIE_A1 = '__xa91fe7'; // Access token
+export const COOKIE_A2 = '__xa92be3'; // Refresh token
+export const COOKIE_A3 = '__xa93cd4'; // Protect token
+export const COOKIE_A4 = '__xa93cd5'; // Pending 2FA
 
-// Buyer
-export const COOKIE_B1 = '__xb81cd2';
-export const COOKIE_B2 = '__xb82ef9';
-export const COOKIE_B3 = '__xb83ab7';
-export const COOKIE_B4 = '__xb83ab5';
+// Agent cookies
+export const COOKIE_B1 = '__xb81cd2'; // Access token
+export const COOKIE_B2 = '__xb82ef9'; // Refresh token
+export const COOKIE_B3 = '__xb83ab7'; // Protect token
+export const COOKIE_B4 = '__xb83ab5'; // Pending 2FA
+
+// Customer
+export const COOKIE_C1 = '__xax91fe7'; // Access token
+export const COOKIE_C2 = '__xax92be3'; // Refresh token
+export const COOKIE_C3 = '__xax93cd4'; // Protect token
+export const COOKIE_C4 = '__xax93cd5'; // Pending 2FA
 
 export class CookieService {
   protected readonly role: UserRole;
@@ -89,10 +95,10 @@ export class CookieService {
 
   protected getCookieNames() {
     return {
-      access: this.role === 'admin' ? COOKIE_A1 : COOKIE_B1,
+      access: this.role === 'agent' ? COOKIE_A1 : COOKIE_B1,
       refresh: this.role === 'agent' ? COOKIE_A2 : COOKIE_B2,
-      protect: this.role === 'customer' ? COOKIE_A3 : COOKIE_B3,
-      pending2FA: this.role === 'admin' ? COOKIE_A4 : COOKIE_B4,
+      protect: this.role === 'agent' ? COOKIE_A3 : COOKIE_B3,
+      pending2FA: this.role === 'agent' ? COOKIE_A4 : COOKIE_B4,
     };
   }
 

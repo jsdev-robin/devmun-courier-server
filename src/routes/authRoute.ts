@@ -13,6 +13,14 @@ router.post(
   authController.verifyEmail
 );
 
+router.post(
+  '/signin',
+  authSchema.signin,
+  runSchema,
+  authController.signin,
+  authController.createSession()
+);
+
 router.post('/refresh-token', authController.refreshToken);
 
 router.post(

@@ -1,10 +1,7 @@
-import { Model } from 'mongoose';
-import userModel, { IUser, UserRole } from '../models/userModel';
+import userModel from '../models/userModel';
 import { AuthService } from '../services/auth/AuthServices';
 
-const payload: { model: Model<IUser>; role: UserRole } = {
+export const authController = new AuthService({
   model: userModel,
-  role: 'customer',
-};
-
-export const authController = new AuthService(payload);
+  role: 'agent',
+});

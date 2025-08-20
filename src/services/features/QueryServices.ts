@@ -27,11 +27,11 @@ export class QueryServices<T extends Document> {
 
     // Treat string values as regex searches (case-insensitive)
     const parsedQuery = JSON.parse(queryStr);
-    Object.entries(parsedQuery).forEach(([key, value]) => {
-      if (typeof value === 'string' && key !== 'guides' && key !== '_id') {
-        parsedQuery[key] = { $regex: value, $options: 'i' };
-      }
-    });
+    // Object.entries(parsedQuery).forEach(([key, value]) => {
+    //   if (typeof value === 'string' && key !== 'guides' && key !== '_id') {
+    //     parsedQuery[key] = { $regex: value, $options: 'i' };
+    //   }
+    // });
 
     this.query = this.query.find(parsedQuery);
     return this;
