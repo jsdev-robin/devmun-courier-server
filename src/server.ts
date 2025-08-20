@@ -13,7 +13,7 @@ const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: 'https://devmun.xyz',
+    origin: 'https://www.devmun.xyz',
     methods: ['GET', 'POST'],
     credentials: true,
   },
