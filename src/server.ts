@@ -27,14 +27,31 @@ const io = new Server(httpServer, {
 // });
 
 io.on('connection', (socket) => {
-  socket.on('joinCustomerRoom', (customerId) => {
+  socket.on('joinCustomerRoom', async (customerId) => {
     socket.join(customerId);
+
+    const agentLocation = await nodeClient.get(`agent:${customerId}`);
+    if (agentLocation) {
+      const location = JSON.parse(agentLocation);
+      io.to(customerId).emit('locationUpdate', location);
+    }
   });
 
-  socket.on('agentLocation', ({ customerId, lat, lng }) => {
+  socket.on('agentLocation', async ({ customerId, lat, lng }) => {
+    await nodeClient.setEx(
+      `agent:${customerId}`,
+      3600,
+      JSON.stringify({ lat, lng })
+    );
     io.to(customerId).emit('locationUpdate', { lat, lng });
+  });
 
-    console.log(lat);
+  socket.on('agentDisconnect', async (customerId) => {
+    await nodeClient.del(`agent:${customerId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
   });
 });
 
