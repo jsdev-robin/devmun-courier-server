@@ -68,22 +68,22 @@ export const COOKIE_OPTIONS_NOT_HTTP: CookieOptions = {
 };
 
 // Admin
-export const COOKIE_A1 = '__xa91fe7'; // Access token
-export const COOKIE_A2 = '__xa92be3'; // Refresh token
-export const COOKIE_A3 = '__xa93cd4'; // Protect token
-export const COOKIE_A4 = '__xa93cd5'; // Pending 2FA
+export const COOKIE_A1 = 'xa91fe7'; // Access token
+export const COOKIE_A2 = 'xa92be3'; // Refresh token
+export const COOKIE_A3 = 'xa93cd4'; // Protect token
+export const COOKIE_A4 = 'xa93cd5'; // Pending 2FA
 
 // Agent cookies
-export const COOKIE_B1 = '__xb81cd2'; // Access token
-export const COOKIE_B2 = '__xb82ef9'; // Refresh token
-export const COOKIE_B3 = '__xb83ab7'; // Protect token
-export const COOKIE_B4 = '__xb83ab5'; // Pending 2FA
+export const COOKIE_B1 = 'xb81cd2'; // Access token
+export const COOKIE_B2 = 'xb82ef9'; // Refresh token
+export const COOKIE_B3 = 'xb83ab7'; // Protect token
+export const COOKIE_B4 = 'xb83ab5'; // Pending 2FA
 
 // Customer
-export const COOKIE_C1 = '__xax91fe7'; // Access token
-export const COOKIE_C2 = '__xax92be3'; // Refresh token
-export const COOKIE_C3 = '__xax93cd4'; // Protect token
-export const COOKIE_C4 = '__xax93cd5'; // Pending 2FA
+export const COOKIE_C1 = 'xax91fe7'; // Access token
+export const COOKIE_C2 = 'xax92be3'; // Refresh token
+export const COOKIE_C3 = 'xax93cd4'; // Protect token
+export const COOKIE_C4 = 'xax93cd5'; // Pending 2FA
 
 export class CookieService {
   protected readonly role: UserRole;
