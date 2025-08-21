@@ -11,7 +11,7 @@ router.use(authController.validateToken, authController.requireAuth);
 router
   .route('/parcel')
   .all(authController.restrictTo('customer'))
-  // .get(parcelController.readCustomerAll)
+  .get(parcelController.readCustomerAll)
   .post(createParcelValidator, runSchema, parcelController.createByCustomer);
 
 export default router;

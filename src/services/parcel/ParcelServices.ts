@@ -1,17 +1,18 @@
 import { NextFunction, Request, Response } from 'express';
-import { Model } from 'mongoose';
+import { Document, Model } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiError } from '../../middlewares/errors/ApiError';
 import { IParcel } from '../../models/parcelModel';
 import { catchAsync } from '../../utils/catchAsync';
 import HttpStatusCode from '../../utils/httpStatusCode';
 import { Status } from '../../utils/status';
+import { QueryServices } from '../features/QueryServices';
 
 function generateTrackingId() {
   return 'TRK-' + uuidv4().split('-')[0].toUpperCase();
 }
 
-export class ParcelServices<T extends IParcel> {
+export class ParcelServices<T extends Document> {
   private readonly model: Model<T>;
 
   constructor(model: Model<T>) {
@@ -32,6 +33,35 @@ export class ParcelServices<T extends IParcel> {
       res.status(HttpStatusCode.OK).json({
         status: Status.SUCCESS,
         message: 'Parcel has been created successfully.',
+      });
+    }
+  );
+
+  public readCustomerAll = catchAsync(
+    async (req: Request, res: Response): Promise<void> => {
+      const features = new QueryServices(this.model, {
+        ...req.query,
+        customer: req.self._id,
+      })
+        .filter()
+        .sort()
+        .limitFields()
+        .paginate()
+        .globalSearch(['trackingId'])
+        .populate({
+          path: 'customer',
+          select: 'familyName givenName email avatar -_id',
+        });
+
+      const { data, total } = await features.exec();
+
+      res.status(HttpStatusCode.OK).json({
+        status: Status.SUCCESS,
+        message: 'Product has been retrieve successfully.',
+        data: {
+          data,
+          total,
+        },
       });
     }
   );

@@ -12,7 +12,7 @@ export interface IParcel extends Document {
   parcelType: 'document' | 'package' | 'fragile' | 'electronics';
   paymentMethod: 'COD' | 'Prepaid';
   codAmount: number;
-  status: 'Booked' | 'Picked Up' | 'In Transit' | 'Delivered' | 'Failed';
+  status: 'booked' | 'picked_up' | 'in_transit' | 'delivered' | 'failed';
   pickupLocation?: {
     lat: number;
     lng: number;
@@ -52,8 +52,8 @@ const ParcelSchema: Schema = new Schema(
     codAmount: { type: Number, default: 0 },
     status: {
       type: String,
-      enum: ['Booked', 'Picked Up', 'In Transit', 'Delivered', 'Failed'],
-      default: 'Booked',
+      enum: ['booked', 'picked_up', 'in_transit', 'delivered', 'failed'],
+      default: 'booked',
     },
     pickupLocation: {
       lat: { type: Number },
