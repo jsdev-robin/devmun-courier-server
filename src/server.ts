@@ -28,46 +28,39 @@ const io = new Server(httpServer, {
 // });
 
 io.on('connection', (socket) => {
-  socket.on('joinCustomerRoom', async (customerId) => {
+  socket.on('joinCustomerRoom', (customerId: string) => {
     socket.join(customerId);
-
-    const agentLocation = await nodeClient.get(`agent:${customerId}`);
-    if (agentLocation) {
-      const location = JSON.parse(agentLocation);
-      io.to(customerId).emit('locationUpdate', location);
-    }
   });
 
-  socket.on('agentLocation', async ({ customerId, lat, lng, speed }) => {
-    await nodeClient.setEx(
-      `agent:${customerId}`,
-      3600,
-      JSON.stringify({
+  socket.on(
+    'agentLocation',
+    ({
+      customerId,
+      lat,
+      lng,
+      speed,
+    }: {
+      customerId: string;
+      lat: number;
+      lng: number;
+      speed?: number;
+    }) => {
+      io.to(customerId).emit('locationUpdate', {
         lat,
         lng,
         speed: speed || 0,
         timestamp: Date.now(),
-      })
-    );
-    io.to(customerId).emit('locationUpdate', { lat, lng, speed: speed || 0 });
+      });
+      console.log(`Location: ${lat}, ${lng}, Speed: ${speed || 0} km/h`);
+    }
+  );
 
-    console.log(`Location: ${lat}, ${lng}, Speed: ${speed} km/h`);
+  socket.on('agentDisconnect', (customerId: string) => {
+    io.to(customerId).emit('agentDisconnected');
   });
 
-  socket.on('agentDisconnect', async (customerId) => {
-    await nodeClient.del(`agent:${customerId}`);
-  });
-
-  socket.on('messageFromClient', (msg: string) => {
-    console.log('Message from client:', msg);
-    io.emit('messageFromServer', msg);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
-  });
+  socket.on('disconnect', () => {});
 });
-
 // Utility: Graceful shutdown
 async function gracefulShutdown(server: http.Server, signal: string) {
   console.log(`\n${signal} signal received: Closing HTTP server...`);

@@ -35,18 +35,17 @@ app.set('trust proxy', 1);
 // Configure sessions for OAuth 2.0
 app.use(
   session({
-    secret: 'dddd',
-    resave: false,
-    saveUninitialized: true,
     cookie: {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      maxAge: 24 * 24 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
     },
+    secret: 'dddd',
+    resave: false,
+    saveUninitialized: true,
   })
 );
-
 // Initialize Passport
 initializePassport();
 app.use(passport.initialize());
