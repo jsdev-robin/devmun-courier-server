@@ -12,7 +12,7 @@ function generateTrackingId() {
   return 'TRK-' + uuidv4().split('-')[0].toUpperCase();
 }
 
-export class ParcelServices<T extends Document> {
+export class ParcelServices<T extends Document | IParcel> {
   private readonly model: Model<T>;
 
   constructor(model: Model<T>) {

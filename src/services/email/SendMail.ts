@@ -19,7 +19,7 @@ export class SendMail {
   private transporter = nodemailer.createTransport({
     host: config.EMAIL_HOST,
     port: Number(config.EMAIL_PORT),
-    secure: true,
+    secure: Number(config.EMAIL_PORT) === 465,
     auth: {
       user: config.EMAIL_USERNAME,
       pass: config.EMAIL_PASSWORD,
