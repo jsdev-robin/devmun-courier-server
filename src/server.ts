@@ -58,6 +58,11 @@ io.on('connection', (socket) => {
     await nodeClient.del(`agent:${customerId}`);
   });
 
+  socket.on('messageFromClient', (msg: string) => {
+    console.log('Message from client:', msg);
+    io.emit('messageFromServer', msg);
+  });
+
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });
