@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import ipinfo, { defaultIPSelector } from 'ipinfo-express';
 import morgan from 'morgan';
 import passport from 'passport';
+import path from 'path';
 import qs from 'qs';
 import { config } from './configs/config';
 import { ApiError } from './middlewares/errors/ApiError';
@@ -24,6 +25,14 @@ const app = express();
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+// Set the view engine (e.g., EJS, Pug, Handlebars)
+
+// Set the view engine to EJS
+app.set('view engine', 'ejs');
+
+// Set the views directory
+app.set('views', path.join(__dirname, 'views'));
 
 // Enable nested query parsing
 app.set('query parser', (str: string) => qs.parse(str));

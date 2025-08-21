@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from 'express';
 import { Model } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
@@ -40,6 +39,7 @@ export class ParcelServices<T extends IParcel> {
 
   public readCustomerAll = catchAsync(
     async (req: Request, res: Response): Promise<void> => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const features = new QueryServices<any>(this.model, {
         ...req.query,
         customer: req.self._id,
