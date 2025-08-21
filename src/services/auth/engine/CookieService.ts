@@ -56,15 +56,15 @@ export const COOKIE_OPTIONS_HTTP: CookieOptions = {
   sameSite: 'none',
   secure: true,
   path: '/',
-  domain: config.ISPRODUCTION ? undefined : 'localhost',
+  domain: config.ISPRODUCTION ? '.devmun.xyz' : 'localhost',
 };
 
 export const COOKIE_OPTIONS_NOT_HTTP: CookieOptions = {
-  httpOnly: false,
+  httpOnly: true,
   sameSite: 'none',
   secure: true,
   path: '/',
-  domain: config.ISPRODUCTION ? undefined : 'localhost',
+  domain: config.ISPRODUCTION ? '.devmun.xyz' : 'localhost',
 };
 
 export const COOKIE_A1 = 'xa91fe7'; // Access token
