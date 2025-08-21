@@ -13,8 +13,8 @@ const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: 'https://www.devmun.xyz',
-    // origin: 'http://localhost:3000',
+    // origin: 'https://www.devmun.xyz',
+    origin: 'http://localhost:3000',
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -37,15 +37,20 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('agentLocation', async ({ customerId, lat, lng }) => {
+  socket.on('agentLocation', async ({ customerId, lat, lng, speed }) => {
     await nodeClient.setEx(
       `agent:${customerId}`,
       3600,
-      JSON.stringify({ lat, lng })
+      JSON.stringify({
+        lat,
+        lng,
+        speed: speed || 0,
+        timestamp: Date.now(),
+      })
     );
-    io.to(customerId).emit('locationUpdate', { lat, lng });
+    io.to(customerId).emit('locationUpdate', { lat, lng, speed: speed || 0 });
 
-    console.log(lat);
+    console.log(`Location: ${lat}, ${lng}, Speed: ${speed} km/h`);
   });
 
   socket.on('agentDisconnect', async (customerId) => {
