@@ -13,8 +13,9 @@ const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: 'https://www.devmun.xyz',
-    // origin: 'http://localhost:3000',
+    origin: config.ISPRODUCTION
+      ? 'https://www.devmun.xyz'
+      : 'http://localhost:3000',
     methods: ['GET', 'POST'],
     credentials: true,
   },

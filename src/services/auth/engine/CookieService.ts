@@ -2,7 +2,7 @@ import { CookieOptions, NextFunction, Response } from 'express';
 import { Model } from 'mongoose';
 import { config } from '../../../configs/config';
 import { ApiError } from '../../../middlewares/errors/ApiError';
-import { IUser, UserRole } from '../../../models/userModel';
+import { IUser } from '../../../models/userModel';
 import HttpStatusCode from '../../../utils/httpStatusCode';
 
 export const ACCESS_TTL: number = parseInt(
@@ -67,39 +67,24 @@ export const COOKIE_OPTIONS_NOT_HTTP: CookieOptions = {
   domain: config.ISPRODUCTION ? '.devmun.xyz' : 'localhost',
 };
 
-// Admin
 export const COOKIE_A1 = 'xa91fe7'; // Access token
 export const COOKIE_A2 = 'xa92be3'; // Refresh token
 export const COOKIE_A3 = 'xa93cd4'; // Protect token
 export const COOKIE_A4 = 'xa93cd5'; // Pending 2FA
 
-// Customer
-export const COOKIE_B1 = 'xb81cd2'; // Access token
-export const COOKIE_B2 = 'xb82ef9'; // Refresh token
-export const COOKIE_B3 = 'xb83ab7'; // Protect token
-export const COOKIE_B4 = 'xb83ab5'; // Pending 2FA
-
-// // Customer
-// export const COOKIE_C1 = 'xax91fe7'; // Access token
-// export const COOKIE_C2 = 'xax92be3'; // Refresh token
-// export const COOKIE_C3 = 'xax93cd4'; // Protect token
-// export const COOKIE_C4 = 'xax93cd5'; // Pending 2FA
-
 export class CookieService {
-  protected readonly role: UserRole;
   protected readonly model: Model<IUser>;
 
-  constructor(options: { model: Model<IUser>; role: UserRole }) {
-    this.role = options.role;
+  constructor(options: { model: Model<IUser> }) {
     this.model = options.model;
   }
 
   protected getCookieNames() {
     return {
-      access: this.role === 'agent' ? COOKIE_A1 : COOKIE_B1,
-      refresh: this.role === 'agent' ? COOKIE_A2 : COOKIE_B2,
-      protect: this.role === 'agent' ? COOKIE_A3 : COOKIE_B3,
-      pending2FA: this.role === 'agent' ? COOKIE_A4 : COOKIE_B4,
+      access: COOKIE_A1,
+      refresh: COOKIE_A2,
+      protect: COOKIE_A3,
+      pending2FA: COOKIE_A4,
     };
   }
 

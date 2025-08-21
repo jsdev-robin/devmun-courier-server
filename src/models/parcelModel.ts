@@ -3,13 +3,19 @@ import mongoose, { Schema } from 'mongoose';
 export interface IParcel extends Document {
   trackingId: string;
   customer: mongoose.Types.ObjectId;
+  receiverName: string;
+  receiverPhone: string;
   agent?: mongoose.Types.ObjectId;
   pickupAddress: string;
   deliveryAddress: string;
-  size: 'small' | 'medium' | 'large';
-  type: 'COD' | 'Prepaid';
+  parcelSize: 'small' | 'medium' | 'large';
+  parcelType: 'COD' | 'Prepaid';
   amount: number;
   status: 'Booked' | 'Picked Up' | 'In Transit' | 'Delivered' | 'Failed';
+  pickupLocation?: {
+    lat: number;
+    lng: number;
+  };
   history: {
     status: string;
     location?: {
@@ -26,16 +32,26 @@ const ParcelSchema: Schema = new Schema(
   {
     trackingId: { type: String, unique: true, required: true },
     customer: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    receiverName: { type: String, required: true },
+    receiverPhone: { type: String, required: true },
     agent: { type: Schema.Types.ObjectId, ref: 'User' },
     pickupAddress: { type: String, required: true },
     deliveryAddress: { type: String, required: true },
-    size: { type: String, enum: ['small', 'medium', 'large'], required: true },
-    type: { type: String, enum: ['COD', 'Prepaid'], required: true },
+    parcelSize: {
+      type: String,
+      enum: ['small', 'medium', 'large'],
+      required: true,
+    },
+    parcelType: { type: String, enum: ['COD', 'Prepaid'], required: true },
     amount: { type: Number, default: 0 },
     status: {
       type: String,
       enum: ['Booked', 'Picked Up', 'In Transit', 'Delivered', 'Failed'],
       default: 'Booked',
+    },
+    pickupLocation: {
+      lat: { type: Number },
+      lng: { type: Number },
     },
     history: [
       {

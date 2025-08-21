@@ -28,7 +28,7 @@ import { REFRESH_TTL } from './engine/CookieService';
 import { TokenSignature } from './engine/TokenService';
 
 export class AuthService extends AuthEngine {
-  constructor(options: { model: Model<IUser>; role: UserRole }) {
+  constructor(options: { model: Model<IUser> }) {
     super(options);
   }
 
