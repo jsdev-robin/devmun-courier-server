@@ -8,9 +8,10 @@ export interface IParcel extends Document {
   agent?: mongoose.Types.ObjectId;
   pickupAddress: string;
   deliveryAddress: string;
-  parcelSize: 'small' | 'medium' | 'large';
-  parcelType: 'COD' | 'Prepaid';
-  amount: number;
+  parcelSize: 'small' | 'medium' | 'large' | 'xlarge';
+  parcelType: 'document' | 'package' | 'fragile' | 'electronics';
+  paymentMethod: 'COD' | 'Prepaid';
+  codAmount: number;
   status: 'Booked' | 'Picked Up' | 'In Transit' | 'Delivered' | 'Failed';
   pickupLocation?: {
     lat: number;
@@ -32,9 +33,9 @@ const ParcelSchema: Schema = new Schema(
   {
     trackingId: { type: String, unique: true, required: true },
     customer: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    agent: { type: Schema.Types.ObjectId, ref: 'User' },
     receiverName: { type: String, required: true },
     receiverPhone: { type: String, required: true },
-    agent: { type: Schema.Types.ObjectId, ref: 'User' },
     pickupAddress: { type: String, required: true },
     deliveryAddress: { type: String, required: true },
     parcelSize: {
@@ -42,8 +43,13 @@ const ParcelSchema: Schema = new Schema(
       enum: ['small', 'medium', 'large'],
       required: true,
     },
-    parcelType: { type: String, enum: ['COD', 'Prepaid'], required: true },
-    amount: { type: Number, default: 0 },
+    parcelType: {
+      type: String,
+      enum: ['document', 'package', 'fragile', 'electronics'],
+      required: true,
+    },
+    paymentMethod: { type: String, enum: ['cod', 'prepaid'], required: true },
+    codAmount: { type: Number, default: 0 },
     status: {
       type: String,
       enum: ['Booked', 'Picked Up', 'In Transit', 'Delivered', 'Failed'],
