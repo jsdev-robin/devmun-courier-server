@@ -18,7 +18,7 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "start": "node dist/server.js",
     "start:prod": "NODE_ENV=production ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "tsc --incremental",
+   "build": "tsc && cpx \"src/views/**/*\" dist/views",
     "jsdoc": "npx jsdoc -c jsdoc.json",
     "debug": "ndb dist/src/server.js",
     "lint": "eslint . --config eslint.config.mjs --ignore-pattern 'build/*' --ignore-pattern 'dist/*'"

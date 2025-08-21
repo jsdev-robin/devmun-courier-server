@@ -35,7 +35,7 @@ export class SendMail {
         html: await ejs.renderFile(
           process.env.NODE_ENV !== 'production'
             ? path.join(process.cwd(), `../../views/emails/${template}.ejs`)
-            : path.join(__dirname, '/app/dist/views/emails', `${template}.ejs`),
+            : path.join(__dirname, '../../views/emails', `${template}.ejs`),
           {
             data: { ...this.data },
             subject,
