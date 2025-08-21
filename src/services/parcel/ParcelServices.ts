@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from 'express';
-import { Document, Model } from 'mongoose';
+import { Model } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiError } from '../../middlewares/errors/ApiError';
 import { IParcel } from '../../models/parcelModel';
@@ -12,7 +13,7 @@ function generateTrackingId() {
   return 'TRK-' + uuidv4().split('-')[0].toUpperCase();
 }
 
-export class ParcelServices<T extends Document | IParcel> {
+export class ParcelServices<T extends IParcel> {
   private readonly model: Model<T>;
 
   constructor(model: Model<T>) {
@@ -39,7 +40,7 @@ export class ParcelServices<T extends Document | IParcel> {
 
   public readCustomerAll = catchAsync(
     async (req: Request, res: Response): Promise<void> => {
-      const features = new QueryServices(this.model, {
+      const features = new QueryServices<any>(this.model, {
         ...req.query,
         customer: req.self._id,
       })
