@@ -59,10 +59,8 @@ export class ParcelServices<T extends IParcel> {
       res.status(HttpStatusCode.OK).json({
         status: Status.SUCCESS,
         message: 'Product has been retrieve successfully.',
-        data: {
-          data,
-          total,
-        },
+        data,
+        total,
       });
     }
   );
