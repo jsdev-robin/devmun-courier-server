@@ -35,30 +35,30 @@ router.use(authController.validateToken, authController.requireAuth);
 
 router.post(
   '/signout',
-  authController.restrictTo('customer', 'admin'),
+  authController.restrictTo('customer', 'agent', 'admin'),
   authController.signout
 );
 router.post(
   '/sessions/:token/revoke',
-  authController.restrictTo('customer', 'admin'),
+  authController.restrictTo('customer', 'agent', 'admin'),
   authSchema.token,
   runSchema,
   authController.signoutSession
 );
 router.post(
   '/sessions/revoke-all',
-  authController.restrictTo('customer', 'admin'),
+  authController.restrictTo('customer', 'agent', 'admin'),
   authController.signoutAllSession
 );
 
 router.get(
   '/setup-2fa',
-  authController.restrictTo('customer', 'admin'),
+  authController.restrictTo('customer', 'agent', 'admin'),
   authController.generate2FASetup
 );
 router.put(
   '/enable-2fa',
-  authController.restrictTo('customer', 'admin'),
+  authController.restrictTo('customer', 'agent', 'admin'),
   authSchema.confirm2FA,
   runSchema,
   authController.confirm2FASetup
@@ -66,20 +66,20 @@ router.put(
 
 router.get(
   '/sessions',
-  authController.restrictTo('customer', 'admin'),
+  authController.restrictTo('customer', 'agent', 'admin'),
   authController.getSessions
 );
 router
   .route('/me')
   .get(
-    authController.restrictTo('customer', 'admin'),
+    authController.restrictTo('customer', 'agent', 'admin'),
     authController.getProfile
   );
 router.get(
   '/me/fields',
   authSchema.getFields,
   runSchema,
-  authController.restrictTo('customer', 'admin'),
+  authController.restrictTo('customer', 'agent', 'admin'),
   authController.getProfileFields
 );
 
