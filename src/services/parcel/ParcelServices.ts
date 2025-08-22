@@ -2,7 +2,9 @@ import { NextFunction, Request, Response } from 'express';
 import { Model } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiError } from '../../middlewares/errors/ApiError';
+import { Notification } from '../../models/notificationModel';
 import { IParcel } from '../../models/parcelModel';
+import { parcelNamespace } from '../../server';
 import { catchAsync } from '../../utils/catchAsync';
 import HttpStatusCode from '../../utils/httpStatusCode';
 import { Status } from '../../utils/status';
@@ -24,11 +26,24 @@ export class ParcelServices<T extends IParcel> {
       req: Request<unknown, unknown, IParcel>,
       res: Response
     ): Promise<void> => {
-      await this.model.create({
+      const parcel = await this.model.create({
         ...req.body,
         trackingId: generateTrackingId(),
         customer: req.self._id,
       });
+
+      const notification = await Notification.create({
+        user: req.self._id,
+        role: 'customer',
+        parcel: parcel._id,
+        title: 'Parcel Created',
+        message: `Your parcel with tracking ID ${parcel.trackingId} has been created successfully.`,
+        type: 'success',
+      });
+
+      parcelNamespace
+        .to(req.self._id.toString())
+        .emit('notification', notification);
 
       res.status(HttpStatusCode.OK).json({
         status: Status.SUCCESS,
@@ -79,6 +94,31 @@ export class ParcelServices<T extends IParcel> {
         return next(new ApiError('Parcel not found', HttpStatusCode.NOT_FOUND));
       }
 
+      const agentNotification = await Notification.create({
+        user: req.self._id,
+        role: 'agent',
+        parcel: parcel._id,
+        title: 'Parcel Assigned',
+        message: `You have been assigned to parcel ${parcel.trackingId}.`,
+        type: 'info',
+      });
+
+      const customerNotification = await Notification.create({
+        user: parcel.customer,
+        role: 'customer',
+        parcel: parcel._id,
+        title: 'Parcel Picked Up',
+        message: `Your parcel ${parcel.trackingId} has been picked up by the agent.`,
+        type: 'success',
+      });
+
+      parcelNamespace
+        .to(req.self._id.toString())
+        .emit('notification', agentNotification);
+      parcelNamespace
+        .to(parcel.customer.toString())
+        .emit('notification', customerNotification);
+
       res.status(HttpStatusCode.OK).json({
         status: Status.SUCCESS,
         message: 'Parcel has been accepted successfully.',
@@ -99,6 +139,19 @@ export class ParcelServices<T extends IParcel> {
       if (!parcel) {
         return next(new ApiError('Parcel not found', HttpStatusCode.NOT_FOUND));
       }
+
+      const customerNotification = await Notification.create({
+        user: parcel.customer,
+        role: 'customer',
+        parcel: parcel._id,
+        title: `Parcel ${req.body.status}`,
+        message: `Your parcel ${parcel.trackingId} status has been updated to ${req.body.status}.`,
+        type: 'info',
+      });
+
+      parcelNamespace
+        .to(parcel.customer.toString())
+        .emit('notification', customerNotification);
 
       res.status(HttpStatusCode.OK).json({
         status: Status.SUCCESS,

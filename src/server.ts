@@ -30,6 +30,12 @@ const io = new Server(httpServer, {
 
 initializeSocket(io);
 
+export const parcelNamespace = io.of('/parcel');
+
+parcelNamespace.on('connection', (socket) => {
+  console.log(`Connected ${socket.id}`);
+});
+
 // Utility: Graceful shutdown
 async function gracefulShutdown(server: http.Server, signal: string) {
   console.log(`\n${signal} signal received: Closing HTTP server...`);
