@@ -1,4 +1,5 @@
 import bodyParser from 'body-parser';
+import { RedisStore } from 'connect-redis';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
@@ -11,6 +12,7 @@ import passport from 'passport';
 import path from 'path';
 import qs from 'qs';
 import { config } from './configs/config';
+import { nodeClient } from './configs/redis';
 import { ApiError } from './middlewares/errors/ApiError';
 import { globalErrorHandler } from './middlewares/errors/globalError';
 import { initializePassport } from './middlewares/passport';
@@ -42,6 +44,7 @@ app.set('query parser', (str: string) => qs.parse(str));
 app.set('trust proxy', 1);
 
 // Configure sessions for OAuth 2.0
+
 app.use(
   session({
     cookie: {
@@ -50,6 +53,10 @@ app.use(
       sameSite: 'none',
       maxAge: 24 * 60 * 60 * 1000,
     },
+    store: new RedisStore({
+      client: nodeClient,
+      prefix: 'myapp:',
+    }),
     secret: 'dddd',
     resave: false,
     saveUninitialized: true,
