@@ -87,16 +87,16 @@ export class ParcelServices<T extends IParcel> {
   public readCustomerById = catchAsync(
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       const parcel = await this.model
-        .find({
+        .findOne({
           $and: [{ _id: req.params.id }, { customer: req.self._id }],
         })
         .populate({
           path: 'customer',
-          select: 'familyName givenName email avatar address',
+          select: 'familyName givenName email phone avatar address',
         })
         .populate({
           path: 'agent',
-          select: 'familyName givenName email avatar address',
+          select: 'familyName givenName email phone avatar address',
         });
 
       if (!parcel) {
