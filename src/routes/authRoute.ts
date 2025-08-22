@@ -71,10 +71,10 @@ router.get(
 );
 router
   .route('/me')
-  .get(
-    authController.restrictTo('customer', 'agent', 'admin'),
-    authController.getProfile
-  );
+  .all(authController.restrictTo('customer', 'agent', 'admin'))
+  .get(authController.getProfile)
+  .put(authController.updateAddress);
+
 router.get(
   '/me/fields',
   authSchema.getFields,

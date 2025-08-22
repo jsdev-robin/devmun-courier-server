@@ -45,6 +45,19 @@ export interface IProvider {
   _raw: Record<string, unknown>;
 }
 
+export interface IAddress {
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  stateDivision: string;
+  zipCode: string;
+  landmark?: string;
+  location?: {
+    lat: number;
+    lng: number;
+  };
+}
+
 export interface IUser extends Document {
   _id: ObjectId;
   id: string;
@@ -58,7 +71,7 @@ export interface IUser extends Document {
   password?: string;
   phone: string;
   role: UserRole;
-  address?: string;
+  address?: IAddress;
   sessions?: ISession[];
   twoFA: {
     enabled: boolean;
@@ -139,6 +152,22 @@ const SessionSchema = new Schema<ISession>(
   { _id: false }
 );
 
+const addressSchema = new Schema<IAddress>(
+  {
+    addressLine1: { type: String, required: true },
+    addressLine2: { type: String },
+    city: { type: String, required: true },
+    stateDivision: { type: String, required: true },
+    zipCode: { type: String, required: true },
+    landmark: { type: String },
+    location: {
+      lat: { type: Number },
+      lng: { type: Number },
+    },
+  },
+  { _id: false }
+);
+
 const UserSchema: Schema = new Schema(
   {
     familyName: { type: String, trim: true },
@@ -155,7 +184,10 @@ const UserSchema: Schema = new Schema(
       enum: ['admin', 'agent', 'customer'],
       default: 'customer',
     },
-    address: { type: String },
+    address: {
+      type: addressSchema,
+      required: false,
+    },
     sessions: {
       type: [SessionSchema],
       select: false,
@@ -185,7 +217,6 @@ const UserSchema: Schema = new Schema(
         delete ret.password;
         delete ret.auth;
         delete ret.sessions;
-
         return ret;
       },
     },
@@ -196,7 +227,6 @@ const UserSchema: Schema = new Schema(
         delete ret.password;
         delete ret.auth;
         delete ret.sessions;
-
         return ret;
       },
     },
@@ -213,7 +243,6 @@ UserSchema.pre(
     try {
       if (!this.isModified('password')) return next();
       this.password = await hash(String(this.password), 12);
-
       next();
     } catch (error: unknown) {
       next(error as Error);

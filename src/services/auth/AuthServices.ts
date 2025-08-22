@@ -871,4 +871,24 @@ export class AuthService extends AuthEngine {
       });
     }
   );
+
+  public updateAddress = catchAsync(
+    async (req: Request, res: Response): Promise<void> => {
+      const user = await this.model.findByIdAndUpdate(
+        req.self._id,
+        { address: req.body },
+        { new: true, runValidators: true }
+      );
+
+      const p = nodeClient.multi();
+      p.json.SET(`${user?._id}`, '$', Object(user));
+      p.EXPIRE(`${user?._id}`, REFRESH_TTL * 24 * 60 * 60);
+      await p.exec();
+
+      res.status(HttpStatusCode.OK).json({
+        status: Status.SUCCESS,
+        message: 'Address updated successfully',
+      });
+    }
+  );
 }
