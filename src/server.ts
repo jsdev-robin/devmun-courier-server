@@ -8,6 +8,7 @@ import {
   initializeRedis,
 } from './configs/initializeConnection';
 import { nodeClient } from './configs/redis';
+import { initializeSocket } from './socket/socket';
 
 const httpServer = http.createServer(app);
 
@@ -27,40 +28,8 @@ const io = new Server(httpServer, {
 //   next();
 // });
 
-io.on('connection', (socket) => {
-  socket.on('joinCustomerRoom', (customerId: string) => {
-    socket.join(customerId);
-  });
+initializeSocket(io);
 
-  socket.on(
-    'agentLocation',
-    ({
-      customerId,
-      lat,
-      lng,
-      speed,
-    }: {
-      customerId: string;
-      lat: number;
-      lng: number;
-      speed?: number;
-    }) => {
-      io.to(customerId).emit('locationUpdate', {
-        lat,
-        lng,
-        speed: speed || 0,
-        timestamp: Date.now(),
-      });
-      console.log(`Location: ${lat}, ${lng}, Speed: ${speed || 0} km/h`);
-    }
-  );
-
-  socket.on('agentDisconnect', (customerId: string) => {
-    io.to(customerId).emit('agentDisconnected');
-  });
-
-  socket.on('disconnect', () => {});
-});
 // Utility: Graceful shutdown
 async function gracefulShutdown(server: http.Server, signal: string) {
   console.log(`\n${signal} signal received: Closing HTTP server...`);
