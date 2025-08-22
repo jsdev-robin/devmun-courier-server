@@ -66,7 +66,11 @@ export class ParcelServices<T extends IParcel> {
         .globalSearch(['trackingId'])
         .populate({
           path: 'customer',
-          select: 'familyName givenName email avatar -_id',
+          select: 'familyName givenName email avatar address',
+        })
+        .populate({
+          path: 'agent',
+          select: 'familyName givenName email avatar address',
         });
 
       const { data, total } = await features.exec();
@@ -80,44 +84,67 @@ export class ParcelServices<T extends IParcel> {
     }
   );
 
-  public acceptParcelByAgent = catchAsync(
+  public readCustomerById = catchAsync(
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      const parcel = await this.model
+        .find({
+          $and: [{ _id: req.params.id }, { customer: req.self._id }],
+        })
+        .populate({
+          path: 'customer',
+          select: 'familyName givenName email avatar address',
+        })
+        .populate({
+          path: 'agent',
+          select: 'familyName givenName email avatar address',
+        });
+
+      if (!parcel) {
+        return next(new ApiError('No parcel found', HttpStatusCode.NOT_FOUND));
+      }
+
+      res.status(HttpStatusCode.OK).json({
+        status: Status.SUCCESS,
+        message: 'Parcel has been retrieve successfully.',
+        parcel,
+      });
+    }
+  );
+
+  public acceptParcelByAgent = catchAsync(
+    async (req: Request, res: Response): Promise<void> => {
       const id = req.params.id;
 
-      const parcel = await this.model.findOneAndUpdate(
+      await this.model.findOneAndUpdate(
         { _id: id },
         { agent: req.self._id, status: 'Picked Up' },
         { new: true }
       );
 
-      if (!parcel) {
-        return next(new ApiError('Parcel not found', HttpStatusCode.NOT_FOUND));
-      }
+      // const agentNotification = await Notification.create({
+      //   user: req.self._id,
+      //   role: 'agent',
+      //   parcel: parcel._id,
+      //   title: 'Parcel Assigned',
+      //   message: `You have been assigned to parcel ${parcel.trackingId}.`,
+      //   type: 'info',
+      // });
 
-      const agentNotification = await Notification.create({
-        user: req.self._id,
-        role: 'agent',
-        parcel: parcel._id,
-        title: 'Parcel Assigned',
-        message: `You have been assigned to parcel ${parcel.trackingId}.`,
-        type: 'info',
-      });
+      // const customerNotification = await Notification.create({
+      //   user: parcel.customer,
+      //   role: 'customer',
+      //   parcel: parcel._id,
+      //   title: 'Parcel Picked Up',
+      //   message: `Your parcel ${parcel.trackingId} has been picked up by the agent.`,
+      //   type: 'success',
+      // });
 
-      const customerNotification = await Notification.create({
-        user: parcel.customer,
-        role: 'customer',
-        parcel: parcel._id,
-        title: 'Parcel Picked Up',
-        message: `Your parcel ${parcel.trackingId} has been picked up by the agent.`,
-        type: 'success',
-      });
-
-      parcelNamespace
-        .to(req.self._id.toString())
-        .emit('notification', agentNotification);
-      parcelNamespace
-        .to(parcel.customer.toString())
-        .emit('notification', customerNotification);
+      // parcelNamespace
+      //   .to(req.self._id.toString())
+      //   .emit('notification', agentNotification);
+      // parcelNamespace
+      //   .to(parcel.customer.toString())
+      //   .emit('notification', customerNotification);
 
       res.status(HttpStatusCode.OK).json({
         status: Status.SUCCESS,
