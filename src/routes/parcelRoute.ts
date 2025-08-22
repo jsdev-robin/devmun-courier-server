@@ -18,12 +18,11 @@ router
 router
   .route('/parcel/:id')
   .all(authController.restrictTo('customer'))
-  .get(validateId, runSchema, parcelController.readCustomerById)
-  .post(validateId, runSchema, parcelController.acceptParcelByAgent);
+  .get(validateId, runSchema, parcelController.readCustomerById);
 
 router
   .route('/parcel/agent/assign/:id')
   .all(authController.restrictTo('agent'))
-  .post(validateId, runSchema, parcelController.acceptParcelByAgent);
+  .put(validateId, runSchema, parcelController.acceptParcelByAgent);
 
 export default router;
