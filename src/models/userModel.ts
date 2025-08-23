@@ -177,7 +177,7 @@ const UserSchema: Schema = new Schema(
       url: { type: String },
     },
     email: { type: String, required: true, unique: true },
-    password: { type: String },
+    password: { type: String, select: false },
     phone: { type: String, required: true },
     role: {
       type: String,

@@ -49,11 +49,17 @@ export class SendMail {
     await this.send('verifyEmail', 'Email verify');
   }
 
-  public async emailChangeRequest(): Promise<void> {
-    await this.send('emailChangeRequest', 'Email Address Change Notification');
+  public async parcelAssignCustomer(): Promise<void> {
+    await this.send(
+      'parcelAssignCustomer',
+      'Your parcel has been assigned to a delivery agent'
+    );
   }
 
-  public async emailChangeAlert(): Promise<void> {
-    await this.send('emailChangeAlert', 'Email Change Alert');
+  public async parcelAssignAgent(): Promise<void> {
+    await this.send(
+      'parcelAssignAgent',
+      'Your have assigned a parcel from admin'
+    );
   }
 }

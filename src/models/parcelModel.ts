@@ -1,11 +1,12 @@
 import mongoose, { Schema } from 'mongoose';
+import { IUser } from './userModel';
 
 export interface IParcel extends Document {
   trackingId: string;
-  customer: mongoose.Types.ObjectId;
+  customer: mongoose.Types.ObjectId | IUser;
+  agent: mongoose.Types.ObjectId | IUser;
   receiverName: string;
   receiverPhone: string;
-  agent?: mongoose.Types.ObjectId;
   pickupAddress: string;
   deliveryAddress: string;
   parcelSize: 'small' | 'medium' | 'large' | 'xlarge';

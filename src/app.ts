@@ -15,6 +15,7 @@ import { ApiError } from './middlewares/errors/ApiError';
 import { globalErrorHandler } from './middlewares/errors/globalError';
 import { initializePassport } from './middlewares/passport';
 import { rateLimiter } from './middlewares/rateLimiter';
+import adminStatsRouter from './routes/adminStatsRoutes';
 import authRouter from './routes/authRoute';
 import parcelRouter from './routes/parcelRoute';
 import HttpStatusCode from './utils/httpStatusCode';
@@ -121,6 +122,7 @@ app.get('/', (req, res) => {
 
 // All route
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/admin', adminStatsRouter);
 app.use('/api/v1/customer', parcelRouter);
 
 // Handle 404 errors

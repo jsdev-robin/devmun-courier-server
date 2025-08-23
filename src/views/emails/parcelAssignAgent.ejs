@@ -1,0 +1,236 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>New Parcel Assigned - Devmun</title>
+    <style type="text/css">
+      body,
+      p,
+      h1,
+      h2,
+      h3,
+      a,
+      td {
+        margin: 0;
+        padding: 0;
+        font-weight: inherit;
+        line-height: 1.5;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          Helvetica, Arial, sans-serif;
+        background-color: #f9fafb;
+        color: #374151;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        padding: 0;
+        margin: 0;
+      }
+
+      .email-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+      }
+
+      .email-header {
+        background: linear-gradient(135deg, #047857 0%, #10b981 100%);
+        color: #ffffff;
+        padding: 40px 48px;
+        text-align: center;
+        clip-path: polygon(0 0, 100% 0, 100% 85%, 0% 100%);
+      }
+
+      .verification-notice {
+        background-color: #ecfdf5;
+        border-left: 4px solid #059669;
+        color: #065f46;
+        padding: 16px 24px;
+        margin: 32px 40px 24px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 500;
+      }
+
+      .email-logo {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        letter-spacing: 0.5px;
+      }
+
+      .email-title {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .email-subtitle {
+        font-size: 15px;
+        opacity: 0.9;
+        font-weight: 400;
+      }
+
+      .email-content {
+        padding: 0 40px 32px;
+        color: #374151;
+        font-size: 16px;
+      }
+
+      .email-content p {
+        margin-bottom: 20px;
+      }
+
+      .otp-box {
+        background-color: #f3f4f6;
+        padding: 16px;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 18px;
+        font-weight: 600;
+        color: #047857;
+        margin: 24px 0;
+        border: 1px dashed #9ca3af;
+      }
+
+      .action-button {
+        display: inline-block;
+        background-color: #059669;
+        color: #ffffff !important;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 16px;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-align: center;
+        transition: background-color 0.2s ease;
+        margin-top: 16px;
+      }
+
+      .action-button:hover {
+        background-color: #047857;
+      }
+
+      .email-footer {
+        padding: 32px 40px;
+        text-align: center;
+        font-size: 14px;
+        color: #6b7280;
+        border-top: 1px solid #e5e7eb;
+      }
+
+      .footer-links {
+        margin-bottom: 16px;
+      }
+
+      .footer-links a {
+        color: #059669;
+        text-decoration: none;
+        margin: 0 8px;
+        font-weight: 500;
+      }
+
+      .footer-links a:hover {
+        text-decoration: underline;
+      }
+
+      .footer-text {
+        margin-top: 8px;
+        font-size: 13px;
+        color: #9ca3af;
+      }
+
+      @media only screen and (max-width: 600px) {
+        .email-header {
+          padding: 32px 24px;
+          clip-path: polygon(0 0, 100% 0, 100% 90%, 0% 100%);
+        }
+
+        .email-content {
+          padding: 0 24px 24px;
+        }
+
+        .verification-notice {
+          margin: 24px 20px 16px;
+          padding: 12px 16px;
+        }
+      }
+    </style>
+  </head>
+  <body style="background-color: #f9fafb; padding: 24px 12px">
+    <div
+      class="email-container"
+      role="main"
+      aria-label="Agent Parcel Assignment"
+    >
+      <div class="email-header">
+        <div class="email-logo">Devmun</div>
+        <h1 class="email-title">New Parcel Assigned</h1>
+        <p class="email-subtitle">
+          A parcel has been assigned to you for delivery
+        </p>
+      </div>
+
+      <!-- Notice -->
+      <div class="verification-notice" role="alert">
+        <strong>Heads up!</strong> You’ve been assigned a new parcel to deliver.
+      </div>
+
+      <div class="email-content">
+        <p>Hello <%= data.user.familyName %></p>
+
+        <p>A new parcel has been assigned to you with the following details:</p>
+
+        <div class="otp-box">
+          📦 Tracking ID: <%= data.parcel.trackingId %><br />
+          👤 Customer: <%= data.customer.familyName %> <%=
+          data.customer.givenName %><br />
+          📞 Phone: <%= data.customer.phone %><br />
+          📍 Address: <%= data.customer.address %>
+        </div>
+
+        <p>
+          Please ensure timely pickup and safe delivery to the customer’s
+          address. You can view more details and update delivery status by
+          clicking below:
+        </p>
+
+        <a
+          href="<%= data.agentDashboardUrl %>"
+          class="action-button"
+          target="_blank"
+          rel="noopener"
+          >View Parcel in Dashboard</a
+        >
+
+        <p style="font-size: 14px; color: #6b7280; margin-top: 20px">
+          <strong>Note:</strong> Contact the customer directly if you need
+          further clarification about the delivery address.
+        </p>
+      </div>
+
+      <!-- Footer -->
+      <div class="email-footer">
+        <div class="footer-links">
+          <a href="<%= data.helpUrl || '#' %>">Help Center</a>
+          <a href="<%= data.privacyUrl || '#' %>">Privacy</a>
+          <a href="<%= data.termsUrl || '#' %>">Terms</a>
+        </div>
+        <p>© 2025 Devmun. All rights reserved.</p>
+        <p class="footer-text">
+          Devmun, Kewarjani, Manikganj-1800, Dhaka, BD<br />
+          This email was sent to <%= data.user.email %> regarding your assigned
+          parcel.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

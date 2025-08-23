@@ -33,6 +33,7 @@ router
 router
   .route('/parcel/agent/assign/:id')
   .all(authController.restrictTo('agent'))
-  .put(validateId, runSchema, parcelController.acceptParcelByAgent);
+  .put(validateId, runSchema, parcelController.acceptParcelByAgent)
+  .get(validateId, runSchema, parcelController.readAgentById);
 
 export default router;

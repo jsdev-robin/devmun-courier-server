@@ -142,6 +142,33 @@ export class ParcelServices<T extends IParcel> {
     }
   );
 
+  public readAgentById = catchAsync(
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      const parcel = await this.model
+        .findOne({
+          $and: [{ _id: req.params.id }, { agent: req.self._id }],
+        })
+        .populate({
+          path: 'customer',
+          select: 'familyName givenName email phone avatar address',
+        })
+        .populate({
+          path: 'agent',
+          select: 'familyName givenName email phone avatar address',
+        });
+
+      if (!parcel) {
+        return next(new ApiError('No parcel found', HttpStatusCode.NOT_FOUND));
+      }
+
+      res.status(HttpStatusCode.OK).json({
+        status: Status.SUCCESS,
+        message: 'Parcel has been retrieve successfully.',
+        parcel,
+      });
+    }
+  );
+
   public acceptParcelByAgent = catchAsync(
     async (req: Request, res: Response): Promise<void> => {
       const id = req.params.id;
