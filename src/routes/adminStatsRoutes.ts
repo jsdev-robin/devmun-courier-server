@@ -5,6 +5,7 @@ import { authController } from '../controllers/authController';
 import { parseJson } from '../middlewares/parseJson';
 import { agentSchema } from '../validations/agentSchema';
 import { isEmail } from '../validations/emailCheck';
+import { parcelAssingSchema } from '../validations/parcelAssginSchema';
 import { runSchema } from '../validations/runSchema';
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -34,7 +35,12 @@ router.post(
   adminStatsController.inviteNewAgnet
 );
 
-router.put('/agent/assign', adminStatsController.parcelAssignToAgent);
+router.put(
+  '/agent/assign',
+  parcelAssingSchema,
+  runSchema,
+  adminStatsController.parcelAssignToAgent
+);
 router.get('/customer', adminStatsController.readAllCustomer);
 
 export default router;

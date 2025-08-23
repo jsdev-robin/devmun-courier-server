@@ -147,10 +147,19 @@ export class AdminStatsServices {
 
   public parcelAssignToAgent = catchAsync(
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-      const { parcelId, agentId } = req.body;
+      const { parcelId, agentId, priority, notes } = req.body;
 
       const parcel = await parcelModel
-        .findByIdAndUpdate(parcelId, { agent: agentId }, { new: true })
+        .findByIdAndUpdate(
+          parcelId,
+          {
+            agent: agentId,
+            priority: priority,
+            notes: notes,
+            status: 'picked_up',
+          },
+          { new: true }
+        )
         .populate<{ customer: IUser }>(
           'customer',
           'familyName givenName phone address email phone'
