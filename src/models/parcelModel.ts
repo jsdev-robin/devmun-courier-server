@@ -1,10 +1,11 @@
-import mongoose, { Schema } from 'mongoose';
-import { IUser } from './userModel';
+import mongoose, { Document, ObjectId, Schema } from 'mongoose';
 
 export interface IParcel extends Document {
+  _id: ObjectId;
+  id: string;
   trackingId: string;
-  customer: mongoose.Types.ObjectId | IUser;
-  agent: mongoose.Types.ObjectId | IUser;
+  customer: mongoose.Types.ObjectId;
+  agent: mongoose.Types.ObjectId;
   receiverName: string;
   receiverPhone: string;
   pickupAddress: string;

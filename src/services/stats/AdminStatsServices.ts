@@ -1,18 +1,34 @@
 import { NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
+import { config } from '../../configs/config';
 import { ApiError } from '../../middlewares/errors/ApiError';
 import parcelModel from '../../models/parcelModel';
 import userModel, { IUser } from '../../models/userModel';
 import { catchAsync } from '../../utils/catchAsync';
 import HttpStatusCode from '../../utils/httpStatusCode';
 import { Status } from '../../utils/status';
+import { uploadToCloudinary } from '../../utils/uploadToCloudinary';
 import { SendMail } from '../email/SendMail';
 import { QueryServices } from '../features/QueryServices';
 
 export class AdminStatsServices {
   public readAllParcel = catchAsync(
-    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-      const parcels = await parcelModel
-        .find()
+    async (req: Request, res: Response): Promise<void> => {
+      const page = req.query.page
+        ? parseInt(String(req.query.page), 10) || 1
+        : 1;
+      const limit = req.query.limit
+        ? parseInt(String(req.query.limit), 10) || 20
+        : 20;
+
+      const features = new QueryServices(parcelModel, {
+        ...req.query,
+      })
+        .filter()
+        .sort()
+        .limitFields()
+        .paginate()
+        .globalSearch(['trackingId'])
         .populate({
           path: 'customer',
           select: 'familyName givenName email phone avatar address',
@@ -22,20 +38,38 @@ export class AdminStatsServices {
           select: 'familyName givenName email phone avatar address',
         });
 
-      if (!parcels || parcels.length === 0) {
-        return next(new ApiError('No parcels found', HttpStatusCode.NOT_FOUND));
-      }
+      const { data, total } = await features.exec();
 
       res.status(HttpStatusCode.OK).json({
         status: Status.SUCCESS,
         message: 'Parcels fetched successfully.',
-        data: parcels,
+        data: {
+          data,
+          total,
+          pagination: {
+            total,
+            totalPages: Math.ceil(total / limit),
+            currentPage: page,
+            itemsPerPage: limit,
+            hasNextPage: page < Math.ceil(total / limit),
+            hasPrevPage: page > 1,
+            nextPage: page < Math.ceil(total / limit) ? page + 1 : null,
+            prevPage: page > 1 ? page - 1 : null,
+          },
+        },
       });
     }
   );
 
   public readAllAgent = catchAsync(
     async (req: Request, res: Response): Promise<void> => {
+      const page = req.query.page
+        ? parseInt(String(req.query.page), 10) || 1
+        : 1;
+      const limit = req.query.limit
+        ? parseInt(String(req.query.limit), 10) || 20
+        : 20;
+
       const features = new QueryServices(userModel, {
         ...req.query,
         role: 'agent',
@@ -54,6 +88,16 @@ export class AdminStatsServices {
         data: {
           data,
           total,
+          pagination: {
+            total,
+            totalPages: Math.ceil(total / limit),
+            currentPage: page,
+            itemsPerPage: limit,
+            hasNextPage: page < Math.ceil(total / limit),
+            hasPrevPage: page > 1,
+            nextPage: page < Math.ceil(total / limit) ? page + 1 : null,
+            prevPage: page > 1 ? page - 1 : null,
+          },
         },
       });
     }
@@ -61,6 +105,13 @@ export class AdminStatsServices {
 
   public readAllCustomer = catchAsync(
     async (req: Request, res: Response): Promise<void> => {
+      const page = req.query.page
+        ? parseInt(String(req.query.page), 10) || 1
+        : 1;
+      const limit = req.query.limit
+        ? parseInt(String(req.query.limit), 10) || 20
+        : 20;
+
       const features = new QueryServices(userModel, {
         ...req.query,
         role: 'customer',
@@ -79,6 +130,16 @@ export class AdminStatsServices {
         data: {
           data,
           total,
+          pagination: {
+            total,
+            totalPages: Math.ceil(total / limit),
+            currentPage: page,
+            itemsPerPage: limit,
+            hasNextPage: page < Math.ceil(total / limit),
+            hasPrevPage: page > 1,
+            nextPage: page < Math.ceil(total / limit) ? page + 1 : null,
+            prevPage: page > 1 ? page - 1 : null,
+          },
         },
       });
     }
@@ -148,6 +209,91 @@ export class AdminStatsServices {
             )
           );
         });
+    }
+  );
+
+  public inviteNewAgnet = catchAsync(
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      const { email } = req.body;
+      const userExists = await userModel.findOne({ email }).exec();
+
+      // If user exists, return a 400 error with message
+      if (userExists) {
+        return next(
+          new ApiError(
+            'This email is already registered. Use a different email address.',
+            HttpStatusCode.BAD_REQUEST
+          )
+        );
+      }
+
+      const token = jwt.sign({ email: email }, config.ACTIVATION_SECRET, {
+        expiresIn: '3d',
+      });
+
+      const mailData = {
+        user: {
+          email,
+        },
+        token: token,
+      };
+
+      await new SendMail(mailData)
+        .agentInvite()
+        .then(() => {
+          // On success, send OK response with verification token
+          res.status(HttpStatusCode.OK).json({
+            status: Status.SUCCESS,
+            message: 'Your invitation send successfully',
+            data: {
+              token,
+            },
+          });
+        })
+        .catch(() => {
+          // On failure, pass error to the next middleware
+          return next(
+            new ApiError(
+              'An error occurred while sending the verification email. Please try again later.',
+              HttpStatusCode.INTERNAL_SERVER_ERROR
+            )
+          );
+        });
+    }
+  );
+
+  public createAgent = catchAsync(
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      const token = req.body.token;
+
+      const decoded = jwt.verify(token, config.ACTIVATION_SECRET) as {
+        email: string;
+      };
+
+      const file = req.file as Express.Multer.File;
+
+      const result = await uploadToCloudinary(file.buffer);
+
+      if (!result) {
+        return next(
+          new ApiError('No images uploaded', HttpStatusCode.BAD_REQUEST)
+        );
+      }
+
+      await userModel.create({
+        ...req.body,
+        avatar: {
+          url: result.url,
+          public_id: result.public_id,
+        },
+        role: 'agent',
+        email: decoded.email,
+      });
+
+      res.status(HttpStatusCode.CREATED).json({
+        status: Status.SUCCESS,
+        message: 'Your agent account has been created successfully.',
+      });
     }
   );
 }

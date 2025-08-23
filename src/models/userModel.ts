@@ -72,6 +72,9 @@ export interface IUser extends Document {
   phone: string;
   role: UserRole;
   address?: IAddress;
+  vehicleType?: string;
+  vehicleNumber?: string;
+  licenseNumber?: string;
   sessions?: ISession[];
   twoFA: {
     enabled: boolean;
@@ -188,6 +191,9 @@ const UserSchema: Schema = new Schema(
       type: addressSchema,
       required: false,
     },
+    vehicleType: { type: String, trim: true },
+    vehicleNumber: { type: String, trim: true },
+    licenseNumber: { type: String, trim: true },
     sessions: {
       type: [SessionSchema],
       select: false,

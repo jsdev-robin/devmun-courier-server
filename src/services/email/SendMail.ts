@@ -62,4 +62,10 @@ export class SendMail {
       'Your have assigned a parcel from admin'
     );
   }
+  public async agentInvite(): Promise<void> {
+    await this.send(
+      'agentInvite',
+      'Your admin has invited you to become a delivery agent'
+    );
+  }
 }
