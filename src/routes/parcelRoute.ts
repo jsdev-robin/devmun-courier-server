@@ -21,6 +21,16 @@ router
   .get(validateId, runSchema, parcelController.readCustomerById);
 
 router
+  .route('/parcel/agent/status-counts')
+  .all(authController.restrictTo('agent'))
+  .get(parcelController.getStatusCountsByAgent);
+
+router
+  .route('/parcel/agent/assign')
+  .all(authController.restrictTo('agent'))
+  .get(parcelController.readAgentAll);
+
+router
   .route('/parcel/agent/assign/:id')
   .all(authController.restrictTo('agent'))
   .put(validateId, runSchema, parcelController.acceptParcelByAgent);

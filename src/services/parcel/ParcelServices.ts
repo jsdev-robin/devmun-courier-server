@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from 'express';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiError } from '../../middlewares/errors/ApiError';
 import { Notification } from '../../models/notificationModel';
@@ -54,7 +55,6 @@ export class ParcelServices<T extends IParcel> {
 
   public readCustomerAll = catchAsync(
     async (req: Request, res: Response): Promise<void> => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const features = new QueryServices<any>(this.model, {
         ...req.query,
         customer: req.self._id,
@@ -78,6 +78,37 @@ export class ParcelServices<T extends IParcel> {
       res.status(HttpStatusCode.OK).json({
         status: Status.SUCCESS,
         message: 'Product has been retrieve successfully.',
+        data,
+        total,
+      });
+    }
+  );
+
+  public readAgentAll = catchAsync(
+    async (req: Request, res: Response): Promise<void> => {
+      const features = new QueryServices<any>(this.model, {
+        ...req.query,
+        agent: req.self._id,
+      })
+        .filter()
+        .sort()
+        .limitFields()
+        .paginate()
+        .globalSearch(['trackingId'])
+        .populate({
+          path: 'customer',
+          select: 'familyName givenName email avatar address',
+        })
+        .populate({
+          path: 'agent',
+          select: 'familyName givenName email avatar address',
+        });
+
+      const { data, total } = await features.exec();
+
+      res.status(HttpStatusCode.OK).json({
+        status: Status.SUCCESS,
+        message: 'Parcels has been retrieve successfully.',
         data,
         total,
       });
@@ -183,6 +214,30 @@ export class ParcelServices<T extends IParcel> {
       res.status(HttpStatusCode.OK).json({
         status: Status.SUCCESS,
         message: 'Parcel status has been updated successfully.',
+      });
+    }
+  );
+
+  public getStatusCountsByAgent = catchAsync(
+    async (req: Request, res: Response): Promise<void> => {
+      const data = await this.model.aggregate([
+        {
+          $match: {
+            agent: new Types.ObjectId(req.self.id as string),
+          },
+        },
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 },
+          },
+        },
+      ]);
+
+      res.status(HttpStatusCode.OK).json({
+        status: Status.SUCCESS,
+        message: 'Parcel status counts fetched successfully.',
+        data,
       });
     }
   );
