@@ -8,6 +8,10 @@ import { catchAsync } from '../../utils/catchAsync';
 import HttpStatusCode from '../../utils/httpStatusCode';
 import { Status } from '../../utils/status';
 import { uploadToCloudinary } from '../../utils/uploadToCloudinary';
+import {
+  getParcelStatusDistribution,
+  getParcelStatusDistributionByTime,
+} from '../analytics/analytics';
 import { SendMail } from '../email/SendMail';
 import { QueryServices } from '../features/QueryServices';
 
@@ -302,6 +306,28 @@ export class AdminStatsServices {
       res.status(HttpStatusCode.CREATED).json({
         status: Status.SUCCESS,
         message: 'Your agent account has been created successfully.',
+      });
+    }
+  );
+
+  public parcelStatusDistribution = catchAsync(
+    async (req: Request, res: Response): Promise<void> => {
+      const { timeframe } = req.query;
+
+      let data;
+      if (timeframe && ['day', 'week', 'month'].includes(timeframe as string)) {
+        data = await getParcelStatusDistributionByTime(
+          timeframe as 'day' | 'week' | 'month'
+        );
+      } else {
+        data = await getParcelStatusDistribution();
+      }
+      res.status(HttpStatusCode.CREATED).json({
+        status: Status.SUCCESS,
+        message: 'Parcel status distribution retrieved successfully.',
+        data: {
+          data,
+        },
       });
     }
   );

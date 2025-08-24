@@ -42,5 +42,9 @@ router.put(
   adminStatsController.parcelAssignToAgent
 );
 router.get('/customer', adminStatsController.readAllCustomer);
+router.get(
+  '/analytics/status-distribution',
+  adminStatsController.parcelStatusDistribution
+);
 
 export default router;

@@ -16,8 +16,9 @@ import { globalErrorHandler } from './middlewares/errors/globalError';
 import { initializePassport } from './middlewares/passport';
 import { rateLimiter } from './middlewares/rateLimiter';
 import adminStatsRouter from './routes/adminStatsRoutes';
+import agentStatsRouter from './routes/agentStatsRoutes';
 import authRouter from './routes/authRoute';
-import parcelRouter from './routes/parcelRoute';
+import customerStatsRouter from './routes/customerRoutes';
 import HttpStatusCode from './utils/httpStatusCode';
 
 const app = express();
@@ -123,7 +124,8 @@ app.get('/', (req, res) => {
 // All route
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/admin', adminStatsRouter);
-app.use('/api/v1/customer', parcelRouter);
+app.use('/api/v1/agent', agentStatsRouter);
+app.use('/api/v1/customer', customerStatsRouter);
 
 // Handle 404 errors
 app.all(/(.*)/, (req: Request, res: Response, next: NextFunction) => {
