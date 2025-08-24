@@ -45,6 +45,14 @@ router.put(
   authController.resetPasswordRequest
 );
 
+router.post(
+  '/verify-2fa/:token',
+  authSchema.token,
+  runSchema,
+  authController.verify2FAOnSign,
+  authController.createSession()
+);
+
 router.use(authController.validateToken, authController.requireAuth);
 
 router.post(
