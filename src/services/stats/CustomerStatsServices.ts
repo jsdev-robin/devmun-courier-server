@@ -1,5 +1,6 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { ApiError } from '../../middlewares/errors/ApiError';
 import parcelModel from '../../models/parcelModel';
 import { catchAsync } from '../../utils/catchAsync';
 import HttpStatusCode from '../../utils/httpStatusCode';
@@ -72,6 +73,35 @@ export class CustomerStatsServices {
       res.status(HttpStatusCode.OK).json({
         status: Status.SUCCESS,
         message: 'Parcel has been created successfully.',
+      });
+    }
+  );
+
+  public readById = catchAsync(
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      const parcel = await parcelModel
+        .findOne({
+          $and: [{ _id: req.params.id }, { customer: req.self._id }],
+        })
+        .populate({
+          path: 'customer',
+          select: 'familyName givenName email phone avatar address',
+        })
+        .populate({
+          path: 'agent',
+          select: 'familyName givenName email phone avatar address',
+        });
+
+      if (!parcel) {
+        return next(new ApiError('No parcel found', HttpStatusCode.NOT_FOUND));
+      }
+
+      res.status(HttpStatusCode.OK).json({
+        status: Status.SUCCESS,
+        message: 'Parcel has been retrieve successfully.',
+        data: {
+          parcel,
+        },
       });
     }
   );

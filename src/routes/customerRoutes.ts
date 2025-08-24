@@ -14,7 +14,10 @@ router.use(
 
 router.route('/parcel').get(customerStatsController.readAllParcel);
 
-router.route('/parcel/:id').put(customerStatsController.createByCustomer);
+router
+  .route('/parcel/:id')
+  .put(customerStatsController.createByCustomer)
+  .get(customerStatsController.readById);
 
 router
   .route('/parcel')
