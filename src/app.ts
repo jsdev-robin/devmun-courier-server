@@ -19,6 +19,7 @@ import adminStatsRouter from './routes/adminStatsRoutes';
 import agentStatsRouter from './routes/agentStatsRoutes';
 import authRouter from './routes/authRoute';
 import customerStatsRouter from './routes/customerRoutes';
+import oauthRouter from './routes/oauthRoutes';
 import HttpStatusCode from './utils/httpStatusCode';
 
 const app = express();
@@ -123,6 +124,7 @@ app.get('/', (req, res) => {
 
 // All route
 app.use('/api/v1/auth', authRouter);
+app.use('/', oauthRouter);
 app.use('/api/v1/admin', adminStatsRouter);
 app.use('/api/v1/agent', agentStatsRouter);
 app.use('/api/v1/customer', customerStatsRouter);
