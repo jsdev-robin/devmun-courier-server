@@ -13,11 +13,7 @@ export const parcelAssingSchema = [
     .isMongoId()
     .withMessage('Invalid agentId'),
 
-  check('priority')
-    .notEmpty()
-    .withMessage('priority is required')
-    .isIn(['urgent', 'high', 'medium', 'low', 'deferred'])
-    .withMessage('Invalid priority value'),
+  check('priority').notEmpty().withMessage('priority is required'),
 
   check('notes')
     .optional()
