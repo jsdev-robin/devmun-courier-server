@@ -249,6 +249,9 @@ export class AdminStatsServices {
           email,
         },
         token: token,
+        origin: config.ISPRODUCTION
+          ? 'https://www.devmun.xyz/agent/create'
+          : 'http://localhost:3000/agent/create',
       };
 
       await new SendMail(mailData)
