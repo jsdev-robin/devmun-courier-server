@@ -1,4 +1,5 @@
 import express from 'express';
+import { config } from '../configs/config';
 import { authController } from '../controllers/authController';
 import { authSchema } from '../validations/authSchema';
 import { runSchema } from '../validations/runSchema';
@@ -29,6 +30,19 @@ router.post(
   runSchema,
   authController.verify2FAOnSign,
   authController.createSession()
+);
+
+router.post(
+  '/forgot-password',
+  authSchema.forgotPasswordRequest,
+  runSchema,
+  authController.forgotPasswordRequest(config.CLIENT_HUB_ORIGIN)
+);
+router.put(
+  '/reset-password/:token',
+  authSchema.resetPasswordRequest,
+  runSchema,
+  authController.resetPasswordRequest
 );
 
 router.use(authController.validateToken, authController.requireAuth);

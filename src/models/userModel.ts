@@ -5,6 +5,7 @@ import mongoose, {
   ObjectId,
   Schema,
 } from 'mongoose';
+import { Crypto } from '../security/Crypto';
 
 export type UserRole = 'admin' | 'agent' | 'customer';
 
@@ -85,6 +86,10 @@ export interface IUser extends Document {
     };
   };
   auth: IProvider[];
+
+  passwordChangedAt?: Date;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
 
   createdAt: Date;
   updatedAt: Date;
@@ -213,6 +218,19 @@ const UserSchema: Schema = new Schema(
       default: [],
       select: false,
     },
+
+    passwordChangedAt: {
+      type: Date,
+      select: false,
+    },
+    passwordResetToken: {
+      type: String,
+      select: false,
+    },
+    passwordResetExpires: {
+      type: Date,
+      select: false,
+    },
   },
   {
     timestamps: true,
@@ -261,6 +279,15 @@ UserSchema.methods.isPasswordValid = async function (
   candidatePassword: string
 ): Promise<boolean> {
   return await compare(candidatePassword, this.password ?? '');
+};
+
+UserSchema.methods.createPasswordResetToken = function () {
+  const resetToken = Crypto.randomHexString();
+  this.passwordResetToken = Crypto.hash(resetToken);
+
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+
+  return resetToken;
 };
 
 export default mongoose.model<IUser>('User', UserSchema);

@@ -68,4 +68,8 @@ export class SendMail {
       'Your admin has invited you to become a delivery agent'
     );
   }
+
+  public async forgotPassword(): Promise<void> {
+    await this.send('forgotPassword', 'Forgot password request');
+  }
 }

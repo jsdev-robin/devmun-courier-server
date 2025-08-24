@@ -14,6 +14,8 @@ import { IUser, UserRole } from '../../models/userModel';
 import { Crypto, Decipheriv } from '../../security/Crypto';
 import {
   IConfirm2FARequest,
+  IForgotPasswordRequest,
+  IResetPasswordRequest,
   ISigninRequest,
   ISignupRequest,
   IVerifyEmailRequest,
@@ -888,6 +890,108 @@ export class AuthService extends AuthEngine {
       res.status(HttpStatusCode.OK).json({
         status: Status.SUCCESS,
         message: 'Address updated successfully',
+      });
+    }
+  );
+
+  public forgotPasswordRequest = (url: string) =>
+    catchAsync(
+      async (
+        req: IForgotPasswordRequest,
+        res: Response,
+        next: NextFunction
+      ): Promise<void> => {
+        const user = await this.model.findOne({ email: req.body.email });
+
+        if (!user) {
+          return next(
+            new ApiError(
+              'If this email exists in our system, you will receive a password reset link shortly.',
+              HttpStatusCode.NOT_FOUND
+            )
+          );
+        }
+
+        const resetToken = user.createPasswordResetToken();
+        await user.save({ validateBeforeSave: false });
+
+        const mailData = {
+          user: {
+            name: user?.familyName ?? '',
+            email: user?.email ?? '',
+          },
+          resetUrl: `${url}/reset-password/${resetToken}`,
+          clientInfo: this.getDeviceInfo(req),
+        };
+
+        try {
+          await new SendMail(mailData).forgotPassword();
+
+          res.status(HttpStatusCode.OK).json({
+            status: Status.SUCCESS,
+            message:
+              'Password reset link has been sent to your email. Please check your inbox (and spam folder) for instructions.',
+          });
+        } catch {
+          await this.model.findByIdAndUpdate(
+            user._id,
+            {
+              $unset: {
+                passwordResetToken: 1,
+                passwordResetExpires: 1,
+              },
+            },
+            { validateBeforeSave: false }
+          );
+
+          await user.save({ validateBeforeSave: false });
+
+          return next(
+            new ApiError(
+              'We encountered an issue sending the password reset email. Please try again in a few minutes.',
+              HttpStatusCode.INTERNAL_SERVER_ERROR
+            )
+          );
+        }
+      }
+    );
+
+  public resetPasswordRequest = catchAsync(
+    async (
+      req: IResetPasswordRequest,
+      res: Response,
+      next: NextFunction
+    ): Promise<void> => {
+      const hashedToken = Crypto.hash(req.params.token);
+
+      // First find the user to get the document instance
+      const user = await this.model.findOne({
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { $gt: Date.now() },
+      });
+
+      if (!user) {
+        return next(
+          new ApiError(
+            'The password reset link has expired or is invalid. Please request a new one.',
+            HttpStatusCode.BAD_REQUEST
+          )
+        );
+      }
+
+      // Manually hash the new password
+      user.password = req.body.newPassword;
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      user.passwordChangedAt = new Date();
+
+      // This will trigger the pre-save hook to hash the password
+      await user.save();
+
+      res.status(HttpStatusCode.OK).json({
+        status: Status.SUCCESS,
+        message:
+          'Password updated successfully! You can now log in with your new password.',
       });
     }
   );
