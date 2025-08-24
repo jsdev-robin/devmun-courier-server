@@ -36,7 +36,7 @@ export class CustomerStatsServices {
         })
         .populate({
           path: 'agent',
-          select: 'familyName givenName email phone avatar address',
+          select: 'familyName givenName email phone avatar address vehicleType',
         });
 
       const { data, total } = await features.exec();
@@ -89,7 +89,7 @@ export class CustomerStatsServices {
         })
         .populate({
           path: 'agent',
-          select: 'familyName givenName email phone avatar address',
+          select: 'familyName givenName email phone avatar address vehicleType',
         });
 
       if (!parcel) {
