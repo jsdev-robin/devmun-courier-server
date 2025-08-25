@@ -47,4 +47,11 @@ router.get(
   adminStatsController.parcelStatusDistribution
 );
 
+router.get('/parcel/export/csv', adminStatsController.exportParcelDataIntoCSV);
+router.get('/parcel/export/pdf', adminStatsController.exportParcelDataIntoPDF);
+router.get(
+  '/parcel/export/invoice/:id',
+  adminStatsController.exportParcelDataIntoInvoice
+);
+
 export default router;
