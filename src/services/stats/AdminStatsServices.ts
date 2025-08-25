@@ -751,7 +751,7 @@ export class AdminStatsServices {
       doc
         .fillColor('#fff')
         .fontSize(16)
-        .text('MUNTAHA LOGISTICS', 50, 42)
+        .text('Devmun', 50, 42)
         .fontSize(8)
         .text('Premium Delivery Services', 50, 60);
 
@@ -841,7 +841,7 @@ export class AdminStatsServices {
           yOffset: 20,
         },
         {
-          label: 'Payment Method',
+          label: 'Payment',
           value: (parcel.paymentMethod || 'N/A').toUpperCase(),
           x: 360,
           yOffset: 20,
@@ -956,7 +956,7 @@ export class AdminStatsServices {
 
       const qrY = y + 50;
       const qr = await QRCode.toDataURL(
-        `https://track.muntaha.com/${parcel.trackingId}`
+        `https://track.devmun.com/${parcel.trackingId}`
       );
       const qrImg = qr.replace(/^data:image\/png;base64,/, '');
       doc.image(Buffer.from(qrImg, 'base64'), doc.page.width - 120, qrY, {
@@ -982,7 +982,7 @@ export class AdminStatsServices {
         .fillColor('#718096')
         .fontSize(9)
         .text(
-          'Thank you for choosing Muntaha Logistics',
+          'Thank you for choosing Devmun Logistics',
           doc.page.width / 2,
           doc.page.height - 40,
           {
@@ -990,7 +990,7 @@ export class AdminStatsServices {
           }
         )
         .text(
-          'contact@muntaha.com | +880 XXX-XXXXXXX',
+          'jsdev.robin@gmail.com | +880 1763408494',
           doc.page.width / 2,
           doc.page.height - 25,
           {
