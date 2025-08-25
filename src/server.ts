@@ -8,6 +8,7 @@ import {
   initializeRedis,
 } from './configs/initializeConnection';
 import { nodeClient } from './configs/redis';
+import { liveLocationSocket } from './socket/liveLocationSocket';
 import { initializeSocket } from './socket/socket';
 
 const httpServer = http.createServer(app);
@@ -29,12 +30,7 @@ const io = new Server(httpServer, {
 // });
 
 initializeSocket(io);
-
-export const parcelNamespace = io.of('/parcel');
-
-parcelNamespace.on('connection', (socket) => {
-  console.log(`Connected ${socket.id}`);
-});
+liveLocationSocket(io);
 
 // Utility: Graceful shutdown
 async function gracefulShutdown(server: http.Server, signal: string) {
