@@ -83,7 +83,7 @@ export class AuthService extends AuthEngine {
       // Check if 2FA is enabled for this user
       if (userExists?.twoFA?.enabled) {
         await this.pending2FA(res, { id: userExists.id, remember: true });
-        return res.redirect('http://localhost:3001/sign-in/verify-2fa');
+        return res.redirect('http://localhost:3000/sign-in/verify-2fa');
       }
 
       req.self = await this.model.findById(userExists._id);

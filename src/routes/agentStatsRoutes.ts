@@ -14,4 +14,6 @@ router.route('/parcel').get(agentStatsController.readAllParcel);
 
 router.route('/parcel/:id').put(agentStatsController.updateStatusByAgent);
 
+router.route('/parcel/analytics').get(agentStatsController.getParcelAnalytics);
+
 export default router;

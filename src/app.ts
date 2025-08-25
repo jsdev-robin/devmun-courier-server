@@ -124,7 +124,7 @@ app.get('/', (req, res) => {
 
 // All route
 app.use('/api/v1/auth', authRouter);
-app.use('/', oauthRouter);
+app.use('/v1/auth', oauthRouter);
 app.use('/api/v1/admin', adminStatsRouter);
 app.use('/api/v1/agent', agentStatsRouter);
 app.use('/api/v1/customer', customerStatsRouter);

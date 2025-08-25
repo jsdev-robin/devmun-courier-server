@@ -334,4 +334,207 @@ export class AdminStatsServices {
       });
     }
   );
+
+  public getParcelAnalytics = catchAsync(
+    async (req: Request, res: Response): Promise<void> => {
+      const { startDate, endDate } = req.body;
+
+      const dateFilter: {
+        createdAt?: {
+          $gte?: Date;
+          $lte?: Date;
+          $lt?: Date;
+        };
+      } = {};
+
+      if (startDate && endDate) {
+        dateFilter.createdAt = {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate),
+        };
+      } else if (startDate) {
+        dateFilter.createdAt = {
+          $gte: new Date(startDate),
+        };
+      } else if (endDate) {
+        dateFilter.createdAt = {
+          $lte: new Date(endDate),
+        };
+      } else {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        dateFilter.createdAt = {
+          $gte: today,
+          $lt: tomorrow,
+        };
+      }
+
+      const analytics = await parcelModel.aggregate([
+        {
+          $match: dateFilter,
+        },
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 },
+            totalCOD: { $sum: '$codAmount' },
+            averageCOD: { $avg: '$codAmount' },
+            parcels: {
+              $push: {
+                _id: '$_id',
+                trackingId: '$trackingId',
+                receiverName: '$receiverName',
+                codAmount: '$codAmount',
+                createdAt: '$createdAt',
+              },
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: 'parcels',
+            let: { status: '$_id' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ['$status', '$$status'] },
+                      dateFilter.createdAt?.$gte
+                        ? { $gte: ['$createdAt', dateFilter.createdAt.$gte] }
+                        : { $eq: [true, true] },
+                      dateFilter.createdAt?.$lte
+                        ? { $lte: ['$createdAt', dateFilter.createdAt.$lte] }
+                        : { $eq: [true, true] },
+                    ],
+                  },
+                },
+              },
+              {
+                $group: {
+                  _id: '$parcelSize',
+                  count: { $sum: 1 },
+                  totalCOD: { $sum: '$codAmount' },
+                },
+              },
+            ],
+            as: 'sizeBreakdown',
+          },
+        },
+        {
+          $lookup: {
+            from: 'parcels',
+            let: { status: '$_id' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ['$status', '$$status'] },
+                      dateFilter.createdAt?.$gte
+                        ? { $gte: ['$createdAt', dateFilter.createdAt.$gte] }
+                        : { $eq: [true, true] },
+                      dateFilter.createdAt?.$lte
+                        ? { $lte: ['$createdAt', dateFilter.createdAt.$lte] }
+                        : { $eq: [true, true] },
+                    ],
+                  },
+                },
+              },
+              {
+                $group: {
+                  _id: '$parcelType',
+                  count: { $sum: 1 },
+                  totalCOD: { $sum: '$codAmount' },
+                },
+              },
+            ],
+            as: 'typeBreakdown',
+          },
+        },
+        {
+          $lookup: {
+            from: 'parcels',
+            let: { status: '$_id' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ['$status', '$$status'] },
+                      dateFilter.createdAt?.$gte
+                        ? { $gte: ['$createdAt', dateFilter.createdAt.$gte] }
+                        : { $eq: [true, true] },
+                      dateFilter.createdAt?.$lte
+                        ? { $lte: ['$createdAt', dateFilter.createdAt.$lte] }
+                        : { $eq: [true, true] },
+                    ],
+                  },
+                },
+              },
+              {
+                $group: {
+                  _id: '$priority',
+                  count: { $sum: 1 },
+                  totalCOD: { $sum: '$codAmount' },
+                },
+              },
+            ],
+            as: 'priorityBreakdown',
+          },
+        },
+        {
+          $sort: { count: -1 },
+        },
+      ]);
+
+      const totalSummary = await parcelModel.aggregate([
+        {
+          $match: dateFilter,
+        },
+        {
+          $group: {
+            _id: null,
+            totalParcels: { $sum: 1 },
+            totalCOD: { $sum: '$codAmount' },
+            avgCOD: { $avg: '$codAmount' },
+            deliveredCount: {
+              $sum: {
+                $cond: [{ $eq: ['$status', 'delivered'] }, 1, 0],
+              },
+            },
+            inTransitCount: {
+              $sum: {
+                $cond: [{ $eq: ['$status', 'in_transit'] }, 1, 0],
+              },
+            },
+          },
+        },
+      ]);
+
+      res.status(HttpStatusCode.OK).json({
+        status: Status.SUCCESS,
+        message: 'Parcel analytics fetched successfully.',
+        dateRange: {
+          start:
+            dateFilter.createdAt?.$gte ||
+            new Date(new Date().setHours(0, 0, 0, 0)),
+          end:
+            dateFilter.createdAt?.$lte ||
+            new Date(new Date().setHours(23, 59, 59, 999)),
+        },
+        analytics,
+        summary: totalSummary[0] || {
+          totalParcels: 0,
+          totalCOD: 0,
+          avgCOD: 0,
+          deliveredCount: 0,
+          inTransitCount: 0,
+        },
+      });
+    }
+  );
 }
