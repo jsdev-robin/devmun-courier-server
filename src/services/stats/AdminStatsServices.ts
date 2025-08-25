@@ -547,42 +547,115 @@ export class AdminStatsServices {
       const worksheet = workbook.addWorksheet('Parcels');
 
       worksheet.columns = [
-        { header: 'ID', key: '_id', width: 24 },
+        { header: 'Row Number', key: 'rowNumber', width: 10 },
         { header: 'Tracking ID', key: 'trackingId', width: 20 },
-        { header: 'Customer', key: 'customer', width: 24 },
-        { header: 'Agent', key: 'agent', width: 24 },
-        { header: 'Receiver Name', key: 'receiverName', width: 20 },
-        { header: 'Receiver Phone', key: 'receiverPhone', width: 15 },
-        { header: 'Pickup Address', key: 'pickupAddress', width: 30 },
-        { header: 'Delivery Address', key: 'deliveryAddress', width: 30 },
         { header: 'Parcel Size', key: 'parcelSize', width: 15 },
         { header: 'Parcel Type', key: 'parcelType', width: 15 },
         { header: 'Payment Method', key: 'paymentMethod', width: 15 },
-        { header: 'COD Amount', key: 'codAmount', width: 10 },
+        { header: 'COD Amount', key: 'codAmount', width: 12 },
         { header: 'Status', key: 'status', width: 15 },
         { header: 'Priority', key: 'priority', width: 10 },
+        { header: 'Pickup Address', key: 'pickupAddress', width: 30 },
+        { header: 'Pickup Lat', key: 'pickupLat', width: 12 },
+        { header: 'Pickup Lng', key: 'pickupLng', width: 12 },
+        { header: 'Delivery Address', key: 'deliveryAddress', width: 30 },
         { header: 'Notes', key: 'notes', width: 30 },
+        {
+          header: 'Customer Family Name',
+          key: 'customerFamilyName',
+          width: 20,
+        },
+        { header: 'Customer Given Name', key: 'customerGivenName', width: 20 },
+        { header: 'Customer Email', key: 'customerEmail', width: 25 },
+        { header: 'Customer Phone', key: 'customerPhone', width: 15 },
+        {
+          header: 'Customer Address Line 1',
+          key: 'customerAddressLine1',
+          width: 25,
+        },
+        {
+          header: 'Customer Address Line 2',
+          key: 'customerAddressLine2',
+          width: 25,
+        },
+        { header: 'Customer City', key: 'customerCity', width: 15 },
+        {
+          header: 'Customer State/Division',
+          key: 'customerStateDivision',
+          width: 20,
+        },
+        { header: 'Customer Zip Code', key: 'customerZipCode', width: 12 },
+        { header: 'Customer Landmark', key: 'customerLandmark', width: 20 },
+        { header: 'Customer Lat', key: 'customerLat', width: 12 },
+        { header: 'Customer Lng', key: 'customerLng', width: 12 },
+        { header: 'Receiver Name', key: 'receiverName', width: 20 },
+        { header: 'Receiver Phone', key: 'receiverPhone', width: 15 },
+        { header: 'Agent Family Name', key: 'agentFamilyName', width: 20 },
+        { header: 'Agent Given Name', key: 'agentGivenName', width: 20 },
+        { header: 'Agent Email', key: 'agentEmail', width: 25 },
+        { header: 'Agent Phone', key: 'agentPhone', width: 15 },
+        { header: 'Agent Address Line 1', key: 'agentAddressLine1', width: 25 },
+        { header: 'Agent City', key: 'agentCity', width: 15 },
+        {
+          header: 'Agent State/Division',
+          key: 'agentStateDivision',
+          width: 20,
+        },
+        { header: 'Agent Zip Code', key: 'agentZipCode', width: 12 },
+        { header: 'Agent Landmark', key: 'agentLandmark', width: 20 },
+        { header: 'Created At', key: 'createdAt', width: 20 },
+        { header: 'Updated At', key: 'updatedAt', width: 20 },
       ];
 
-      const parcels = await parcelModel.find();
+      const parcels = await parcelModel
+        .find()
+        .populate('customer')
+        .populate('agent')
+        .lean();
 
-      parcels.forEach((parcel) => {
+      parcels.forEach((parcel, index) => {
+        const customer = (parcel.customer as IUser) || {};
+        const agent = (parcel.agent as IUser) || {};
+
         worksheet.addRow({
-          _id: parcel._id.toString(),
+          rowNumber: index + 1,
           trackingId: parcel.trackingId,
-          customer: parcel.customer?.toString() || '',
-          agent: parcel.agent?.toString() || '',
-          receiverName: parcel.receiverName,
-          receiverPhone: parcel.receiverPhone,
-          pickupAddress: parcel.pickupAddress,
-          deliveryAddress: parcel.deliveryAddress,
           parcelSize: parcel.parcelSize,
           parcelType: parcel.parcelType,
           paymentMethod: parcel.paymentMethod,
           codAmount: parcel.codAmount,
           status: parcel.status,
           priority: parcel.priority || '',
+          pickupAddress: parcel.pickupAddress,
+          pickupLat: parcel.pickupLocation?.lat || '',
+          pickupLng: parcel.pickupLocation?.lng || '',
+          deliveryAddress: parcel.deliveryAddress,
           notes: parcel.notes || '',
+          customerFamilyName: customer.familyName || '',
+          customerGivenName: customer.givenName || '',
+          customerEmail: customer.email || '',
+          customerPhone: customer.phone || '',
+          customerAddressLine1: customer.address?.addressLine1 || '',
+          customerAddressLine2: customer.address?.addressLine2 || '',
+          customerCity: customer.address?.city || '',
+          customerStateDivision: customer.address?.stateDivision || '',
+          customerZipCode: customer.address?.zipCode || '',
+          customerLandmark: customer.address?.landmark || '',
+          customerLat: customer.address?.location?.lat || '',
+          customerLng: customer.address?.location?.lng || '',
+          receiverName: parcel.receiverName,
+          receiverPhone: parcel.receiverPhone,
+          agentFamilyName: agent.familyName || '',
+          agentGivenName: agent.givenName || '',
+          agentEmail: agent.email || '',
+          agentPhone: agent.phone || '',
+          agentAddressLine1: agent.address?.addressLine1 || '',
+          agentCity: agent.address?.city || '',
+          agentStateDivision: agent.address?.stateDivision || '',
+          agentZipCode: agent.address?.zipCode || '',
+          agentLandmark: agent.address?.landmark || '',
+          createdAt: parcel.createdAt,
+          updatedAt: parcel.updatedAt,
         });
       });
 
